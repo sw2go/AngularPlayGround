@@ -1,0 +1,22 @@
+Installation Node und NPM: https://www.npmjs.com/get-npm
+  npm -v  ( Test ) 
+
+Installation Angular CLI: 
+  npm install -g @angular/cli
+  ng version  ( Test )
+
+Create Application:
+  cd c:\@github\ngsample
+  ng new Sample.Web.Client --routing true --style scss
+
+Start server at the root-folder ./ 
+  cd c:\@github\ngsample\Sample.Web.Client  
+  ng serve -o ( http://localhost:4200/ ) 
+
+vsc:
+  package.json devDependencies add "bootstrap": "^4.1.0"
+cmd: 
+  ./ npm install
+vsc:
+  ./src/styles add @import '../node_modules/bootstrap/scss/bootstrap';
+
