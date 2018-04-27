@@ -13,10 +13,36 @@ Start server at the root-folder ./
   cd c:\@github\ngsample\Sample.Web.Client  
   ng serve -o ( http://localhost:4200/ ) 
 
+bootstrap
+---------
 vsc:
   package.json devDependencies add "bootstrap": "^4.1.0"
 cmd: 
-  ./ npm install
+  npm install
 vsc:
   ./src/styles add @import '../node_modules/bootstrap/scss/bootstrap';
 
+ng-bootstrap
+------------
+cmd:
+  npm install --save @ng-bootstrap/ng-bootstrap
+
+vsc:
+  ./src/app/app.module.ts erweitern um:
+     import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
+     @NgModule({ ...  imports: [NgbModule.forRoot(), ...] ...})
+
+     ... in anderen Modulen genau gleich aber ohne .forRoot()
+
+
+carousel https://ng-bootstrap.github.io/#/components/carousel/examples
+--------
+cmd:
+  ng g component carousel-basic
+
+vsc:
+  Tip: import {} from './
+
+  ctrl space um Inhalt autom z ufülen
+
+https://stackoverflow.com/questions/41736554/responsive-navbar-with-angular-2-and-bootstrap-4 
