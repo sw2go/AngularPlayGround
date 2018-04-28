@@ -9,7 +9,7 @@ Create Application:
   cd c:\@github\ngsample
   ng new Sample.Web.Client --routing true --style scss
 
-Start server at the root-folder ./ 
+Start server at the root-folder 
   cd c:\@github\ngsample\Sample.Web.Client  
   ng serve -o ( http://localhost:4200/ ) 
 
@@ -43,6 +43,6 @@ cmd:
 vsc:
   Tip: import {} from './
 
-  ctrl space um Inhalt autom z ufülen
+  ctrl space um Inhalt autom zufülen
 
 https://stackoverflow.com/questions/41736554/responsive-navbar-with-angular-2-and-bootstrap-4 

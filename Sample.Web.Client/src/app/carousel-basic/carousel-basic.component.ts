@@ -4,7 +4,10 @@ import {Component, OnInit} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {map} from 'rxjs/operators';
 
-@Component({selector: 'ngbd-carousel-basic', templateUrl: './carousel-basic.html'})
+@Component({
+  selector: 'ngbd-carousel-basic', 
+  templateUrl: './carousel-basic.component.html'
+})
 export class NgbdCarouselBasic implements OnInit {
   images: Array<string>;
 
