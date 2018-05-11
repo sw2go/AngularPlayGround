@@ -9,6 +9,11 @@ import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
 
 import {NgbdCarouselBasic} from './carousel-basic/carousel-basic.component';
 
+//import { CoreModule } from './core/core.module';
+
+//import {HeaderComponent} from './core/header/header.component';
+
+
 
 @NgModule({
   declarations: [
@@ -19,6 +24,7 @@ import {NgbdCarouselBasic} from './carousel-basic/carousel-basic.component';
     BrowserModule,
     AppRoutingModule,
     NgbdCarouselBasic
+   // , HeaderComponent
   ],
   providers: [],
   bootstrap: [AppComponent]

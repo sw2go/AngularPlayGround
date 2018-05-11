@@ -46,3 +46,10 @@ vsc:
   ctrl space um Inhalt autom z ufülen
 
 https://stackoverflow.com/questions/41736554/responsive-navbar-with-angular-2-and-bootstrap-4 
+
+
+core module und header erstellen
+--------------------------------
+ng g m core
+ng g component core\header --module=core
+
