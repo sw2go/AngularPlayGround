@@ -11,7 +11,7 @@ import { NgbdCarouselBasic } from './carousel-basic/carousel-basic.component';
 
 //import { CoreModule } from './core/core.module';
 
-//import {HeaderComponent} from './core/header/header.component';
+import {HeaderComponent} from './core/header/header.component';
 
 
 
@@ -24,7 +24,8 @@ import { NgbdCarouselBasic } from './carousel-basic/carousel-basic.component';
   ],
   declarations: [         // List of module components
     AppComponent,         // <app-root> is used in index.html  
-    NgbdCarouselBasic     // <ngbd-carousel-basic> is used in app.component.html
+    NgbdCarouselBasic,    // <ngbd-carousel-basic> is used in app.component.html
+    HeaderComponent
   ],
   providers: [],
   bootstrap: [AppComponent] // the root component
