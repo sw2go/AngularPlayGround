@@ -8,7 +8,7 @@ import {map} from 'rxjs/operators';
   selector: 'ngbd-carousel-basic', 
   templateUrl: './carousel-basic.component.html'
 })
-export class NgbdCarouselBasic implements OnInit {
+export class CarouselComponent implements OnInit {
   images: Array<string>;
 
   constructor(private _http: HttpClient) {}
