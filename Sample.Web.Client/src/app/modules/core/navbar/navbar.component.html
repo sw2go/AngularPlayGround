@@ -6,11 +6,9 @@
   </button>
   -->
   <button class="navbar-toggler"   (click)="collapsed=!collapsed" type="button" aria-expanded="false" aria-label="Toggle navigation">
-    
-    <!-- http://www.sarasoueidan.com/blog/navicon-transformicons/ -->
-    <span class="lines-button x"  [ngClass]="{'close':!collapsed}" style="margin: 0px">
-      <span class="lines"></span>
-    </span>
+    <div class="lines-button x"  [ngClass]="{'close':!collapsed}" >
+      <span class="lines"></span> <!-- meat part of hamburger -->
+    </div>
   </button>
 
   <div class="navbar-collapse" (click)="collapsed=true" [style.display]="collapsed?'none':'inherit'">

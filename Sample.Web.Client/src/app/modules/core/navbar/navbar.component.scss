@@ -1,12 +1,22 @@
-$color : #ecf0f1;
+// inspired by: http://www.sarasoueidan.com/blog/navicon-transformicons/ 
 
-$button-size : 2.0rem; 
-$transition: .3s; // increase this to see the transformations in slow-motion
+$color : #aeb4b6;
+
+$button-size :1.8rem; 
+$transition: 0.5s; // increase this to see the transformations in slow-motion
  
+.navbar-toggler {
+  border: 0px;    // hide bootstrap toggler border
+  outline: none;
+}
+
 .lines-button {
-  display: inline-block;
-  padding: $button-size/2 $button-size/4;
-  transition: .3s;
+  display: block;         // or inline-block
+  font-size: 0px;         // important for "vertical-align: middle" on .lines ( alignment is made on baselines )
+  padding: $button-size/4  0; // empirisch damit wechsel von burger -> kreuz rahmen nicht erweitert 
+  margin:  $button-size/14;   // empirisch damit buger möglichst weit rechts
+ 
+  transition: $transition;
   cursor: pointer;
   user-select: none;
   border-radius: $button-size/7;
@@ -21,28 +31,33 @@ $transition: .3s; // increase this to see the transformations in slow-motion
   }
 }
 
-@mixin line {
-    display: inline-block;
+// common line properties for later use
+@mixin line {   
+  
     width: $button-size;
     height: $button-size/7;
     background: $color;
     border-radius: $button-size/14; 
+    -webkit-transition: $transition;
     transition: $transition;
   }
 
   .lines {
-   
-    //create middle line
-    @include line;
-    position: relative; 
-   
+    //create middle line vertically centered 
+    @include line;  
+    display: inline-block;  //         
+    position: relative;     //
+    vertical-align: middle; // important: set font-size: 0px; on parent -> baseline  
+
     /*create the upper and lower lines as pseudo-elements of the middle line*/
     &:before, &:after {
      
      @include line;
       position: absolute;
-        left:0;
+      left:0;
       content: '';
+      -webkit-transform-origin: $button-size/14 center;
+      -moz-transform-origin: $button-size/14 center;
       transform-origin: $button-size/14 center;
     }
     &:before { top: $button-size/4; }
