@@ -53,3 +53,5 @@ core module und header erstellen
 ng g m core
 ng g component core\header --module=core
 
+ng g component mainpage\landingsection --module=app
+ng g component mainpage\servicesection --module=app

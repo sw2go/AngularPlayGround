@@ -18,6 +18,8 @@ import { AboutpageComponent } from './aboutpage/aboutpage.component';
 //import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
 import { CarouselModule } from "ngx-bootstrap";
 import { CarouselComponent } from './carousel-basic/carousel-basic.component';
+import { LandingsectionComponent } from './mainpage/landingsection/landingsection.component';
+import { ServicesectionComponent } from './mainpage/servicesection/servicesection.component';
 
 
 
@@ -36,7 +38,9 @@ import { CarouselComponent } from './carousel-basic/carousel-basic.component';
    // NavbarComponent,
     MainpageComponent,
     DetailpageComponent,
-    AboutpageComponent 
+    AboutpageComponent,
+    LandingsectionComponent,
+    ServicesectionComponent 
     ],
   providers: [],
   bootstrap: [AppComponent] // the root component

@@ -1,2 +1,14 @@
 /* You can add global styles to this file, and also import other style files */
 @import '../node_modules/bootstrap/scss/bootstrap';
+
+header {
+    height: 100vh;  // sizes header to 100% viewport - no need to set html and body to 100 % they wrap around it 
+    background-image: url(https://picsum.photos/900/500?image=796);
+    background-size: cover; // cover whole background without repeating image 
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+

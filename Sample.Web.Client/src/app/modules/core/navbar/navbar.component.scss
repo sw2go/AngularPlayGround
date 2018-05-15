@@ -3,11 +3,11 @@
 $color : #aeb4b6;
 
 $button-size :1.8rem; 
-$transition: 0.5s; // increase this to see the transformations in slow-motion
+$transition: 0.3s; // increase this to see the transformations in slow-motion
  
 .navbar-toggler {
   border: 0px;    // hide bootstrap toggler border
-  outline: none;
+  outline: none;  // hide when selected
 }
 
 .lines-button {
@@ -32,8 +32,7 @@ $transition: 0.5s; // increase this to see the transformations in slow-motion
 }
 
 // common line properties for later use
-@mixin line {   
-  
+@mixin line {     
     width: $button-size;
     height: $button-size/7;
     background: $color;
@@ -42,9 +41,8 @@ $transition: 0.5s; // increase this to see the transformations in slow-motion
     transition: $transition;
   }
 
-  .lines {
-    //create middle line vertically centered 
-    @include line;  
+  .lines {     
+    @include line;          //create middle line vertically centered
     display: inline-block;  //         
     position: relative;     //
     vertical-align: middle; // important: set font-size: 0px; on parent -> baseline  
