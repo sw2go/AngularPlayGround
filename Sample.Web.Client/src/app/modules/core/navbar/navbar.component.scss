@@ -1,3 +1,15 @@
+nav {  
+  transition: 2s; // makes a smooth transition from transparent to/from bg-light    
+}
+
+.navbar-toggler { // "hamburger"
+  border: 0px;    // hide bootstrap toggler-button border
+  outline: none;  // hide when selected
+}
+
+
+// hamburger to x menu-button transition
+// -------------------------------------
 // inspired by: http://www.sarasoueidan.com/blog/navicon-transformicons/ 
 
 $color : #aeb4b6;
@@ -5,11 +17,6 @@ $color : #aeb4b6;
 $button-size :1.8rem; 
 $transition: 0.3s; // increase this to see the transformations in slow-motion
  
-.navbar-toggler {
-  border: 0px;    // hide bootstrap toggler border
-  outline: none;  // hide when selected
-}
-
 .lines-button {
   display: block;         // or inline-block
   font-size: 0px;         // important for "vertical-align: middle" on .lines ( alignment is made on baselines )

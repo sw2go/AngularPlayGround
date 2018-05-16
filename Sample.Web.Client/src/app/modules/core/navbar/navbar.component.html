@@ -1,4 +1,4 @@
-<nav class="navbar fixed-top navbar-expand-sm navbar-light bg-light">
+<nav class="navbar fixed-top navbar-expand-sm navbar-light"  [ngClass]="{'bg-light':scrolled || !inmain}" >
   <a class="navbar-brand" href="#">Brand/Logo</a>
   <!--
   <button class="navbar-toggler" (click)="collapsed=!collapsed" type="button" aria-expanded="false" aria-label="Toggle navigation">

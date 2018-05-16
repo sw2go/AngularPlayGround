@@ -9,8 +9,8 @@ Create Application:
   cd c:\@github\ngsample
   ng new Sample.Web.Client --routing true --style scss
 
-Start server at the root-folder 
-  cd c:\@github\ngsample\Sample.Web.Client  
+Start server at the root-folder              *** *** *** *** *** ***
+  cd c:\@github\ngsample\Sample.Web.Client      
   ng serve -o ( http://localhost:4200/ ) 
 
 bootstrap
@@ -43,7 +43,7 @@ cmd:
 vsc:
   Tip: import {} from './
 
-  ctrl space um Inhalt autom zufülen
+  ctrl space um Inhalt autom. zu füllen
 
 https://stackoverflow.com/questions/41736554/responsive-navbar-with-angular-2-and-bootstrap-4 
 
@@ -55,3 +55,7 @@ ng g component core\header --module=core
 
 ng g component mainpage\landingsection --module=app
 ng g component mainpage\servicesection --module=app
+
+
+managing state 
+https://blog.nrwl.io/managing-state-in-angular-applications-22b75ef5625f
