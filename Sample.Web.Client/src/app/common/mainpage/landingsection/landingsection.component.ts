@@ -1,37 +1,20 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NavService, INavSection } from '../../../core/services/nav.service';
 
 @Component({
   selector: 'app-landingsection',
   templateUrl: './landingsection.component.html',
   styleUrls: ['./landingsection.component.scss'],
-  providers: [NavService]
+  providers: []
 })
-export class LandingsectionComponent implements OnInit, OnDestroy, INavSection {
+export class LandingsectionComponent implements OnInit  {
 
-  navservice: NavService;
-  constructor(private ns: NavService) { 
-    this.navservice = ns;
 
+  constructor() { 
   }
 
   ngOnInit() {
-    this.navservice.add(this);
   }
 
-  ngOnDestroy() {
-    this.navservice.remove(this);
-  }
 
-  public getId() {
-    return "a";
-  }
-  public getHeight() {
-    return 0;    
-  }
-
-  getTop() {
-    return 0;
-  }
 
 }

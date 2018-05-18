@@ -1,6 +1,6 @@
 import { TestBed, inject } from '@angular/core/testing';
 
-import { NavService } from './nav.service';
+import { NavService } from './navservice.service';
 
 describe('NavService', () => {
   beforeEach(() => {

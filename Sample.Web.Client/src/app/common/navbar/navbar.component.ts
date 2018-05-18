@@ -1,6 +1,8 @@
 import { Component, OnInit, HostListener } from '@angular/core';
 import { Router, NavigationStart, NavigationEnd, NavigationError, RouterEvent } from '@angular/router';
 import { log } from 'util';
+import { NavService} from './../../core/services/navservice.service';
+
 
 @Component({
   selector: 'core-navbar',
@@ -13,9 +15,9 @@ export class NavbarComponent implements OnInit {
   scrolled: boolean = false;  // used to make navbar transparent 
   inmain: boolean = true;     // we are on main page 
 
-  constructor(private _router : Router) { 
+  constructor(private router : Router, private navservice: NavService) { 
 
-    _router.events.subscribe( (event: RouterEvent) => {
+    router.events.subscribe( (event: RouterEvent) => {
 
       if (event instanceof NavigationStart) {
         console.log(event.url);
@@ -40,7 +42,19 @@ export class NavbarComponent implements OnInit {
   @HostListener('window:scroll', ['$event']) checkScroll() {
     const scrollPosition = window.pageYOffset;
 
-    this.scrolled = (scrollPosition > 5);  
+    this.scrolled = (scrollPosition > 5);
+
+    this.navservice.sections.forEach(element => {
+      let start = element.getTop();
+      let end   = start + element.getHeight();
+      let id    = element.getId();
+
+      if (scrollPosition >= start && scrollPosition < end){
+          console.log("in " + id );
+      }
+
+    });
   }
+
 }
 
