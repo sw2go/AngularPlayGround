@@ -7,19 +7,20 @@ import {HttpClientModule} from '@angular/common/http';
 
 import { AppComponent } from './app.component';
 
-import { CoreModule } from './modules/core/core.module';
-
-import {HeaderComponent} from './modules/core/header/header.component';
+import { CoreModule } from './core/core.module';
+import { HeaderComponent } from './common/header/header.component';
+import { NavbarComponent } from './common/navbar/navbar.component';
 //import {NavbarComponent} from './modules/core/navbar/navbar.component';
-import { MainpageComponent } from './mainpage/mainpage.component';
-import { DetailpageComponent } from './detailpage/detailpage.component';
-import { AboutpageComponent } from './aboutpage/aboutpage.component';
+import { MainpageComponent } from './common/mainpage/mainpage.component';
+import { DetailpageComponent } from './common/detailpage/detailpage.component';
+import { AboutpageComponent } from './common/aboutpage/aboutpage.component';
 
 //import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
 import { CarouselModule } from "ngx-bootstrap";
-import { CarouselComponent } from './carousel-basic/carousel-basic.component';
-import { LandingsectionComponent } from './mainpage/landingsection/landingsection.component';
-import { ServicesectionComponent } from './mainpage/servicesection/servicesection.component';
+import { CarouselComponent } from './common/carousel-basic/carousel-basic.component';
+import { LandingsectionComponent } from './common/mainpage/landingsection/landingsection.component';
+import { ServicesectionComponent } from './common/mainpage/servicesection/servicesection.component';
+import {  } from './common/navsection.directive';
 
 
 
@@ -34,8 +35,8 @@ import { ServicesectionComponent } from './mainpage/servicesection/servicesectio
   declarations: [         // List of module components
     AppComponent,         // <app-root> is used in index.html  
     CarouselComponent,    // <ngbd-carousel-basic> is used in app.component.html
-    //HeaderComponent, 
-   // NavbarComponent,
+    HeaderComponent, 
+    NavbarComponent,
     MainpageComponent,
     DetailpageComponent,
     AboutpageComponent,
