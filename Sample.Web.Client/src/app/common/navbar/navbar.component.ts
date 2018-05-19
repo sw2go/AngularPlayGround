@@ -1,7 +1,7 @@
 import { Component, OnInit, HostListener } from '@angular/core';
 import { Router, NavigationStart, NavigationEnd, NavigationError, RouterEvent } from '@angular/router';
 import { log } from 'util';
-import { NavService} from './../../core/services/navservice.service';
+import { NavService, INavSection} from './../../core/services/navservice.service';
 
 
 @Component({
@@ -44,16 +44,9 @@ export class NavbarComponent implements OnInit {
 
     this.scrolled = (scrollPosition > 5);
 
-    this.navservice.sections.forEach(element => {
-      let start = element.getTop();
-      let end   = start + element.getHeight();
-      let id    = element.getId();
-
-      if (scrollPosition >= start && scrollPosition < end){
-          console.log("in " + id );
-      }
-
-    });
+    let c: INavSection = this.navservice.Current(scrollPosition);
+    if (c != null)
+      console.log(c.getId());
   }
 
 }
