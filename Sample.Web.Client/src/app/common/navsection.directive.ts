@@ -25,4 +25,16 @@ export class NavSectionDirective implements OnInit, OnDestroy, INavSection {
         return this.el.nativeElement.offsetTop;
     }
 
+    scrollTo(): void {
+
+        let wait: number = 500;
+        //Scrollen zum angegebenen Anker (mit einer Verzögerung von 'wait'ms)
+        const element = document.querySelector('#' +this.id)
+        if (element) {
+          setTimeout(() => {
+          element.scrollIntoView({behavior: 'smooth', block: 'start', inline: 'nearest'})
+          }, wait)
+        }
+      } 
+
 }

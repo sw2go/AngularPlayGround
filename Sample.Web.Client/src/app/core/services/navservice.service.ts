@@ -1,20 +1,39 @@
 import { Injectable } from '@angular/core';
+import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 
 export interface INavSection {
   getId(): string; 
   getTop(): number;
+  scrollTo();
 }
 
 @Injectable()
 export class NavService {
 
-  constructor() { }
+  private url: string = "";
+
+  constructor(private router: Router) { 
+
+    router.events.subscribe( (event: RouterEvent) => {
+  
+      if (event instanceof NavigationEnd) {
+        console.log("navend " + event.url);  
+        this.url = event.url;   
+        
+        if (this.sections.length > 0)
+        this.scrollTo();
+
+      }
+
+    });
+  }
 
   private sections: Array<INavSection> = [];
 
   public add(item: INavSection) {
-    if (!this.   sections.some(function(i) { return i.getId() == item.getId();})) {
+    if (!this.sections.some(function(i) { return i.getId() == item.getId();})) {
       this.sections.push(item);
+      console.log("add " + item.getId());
     }
   }
 
@@ -22,6 +41,7 @@ export class NavService {
     let found: number = this.sections.findIndex(i => i.getId() == item.getId());
     if (found>=0) {
       this.sections.splice(found,1); 
+      console.log("del " + item.getId())
     } 
   }
 
@@ -32,6 +52,28 @@ export class NavService {
     }    
     return null;
   }
+
+  public scrollTo() {
+
+    this.sections.forEach(element => {
+
+      if (this.url.endsWith("#" + element.getId())) {
+        console.log("before auto scroll to")
+        element.scrollTo();
+      }
+      else {
+        
+      }
+              
+
+    });
+
+
+    
+    
+
+  }
+
 
 }
 

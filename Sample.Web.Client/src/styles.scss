@@ -10,11 +10,11 @@ main {
 }
 
 
-
 header {
     height: 100vh;  // sizes header to 100% viewport - no need to set html and body to 100 % they wrap around it 
     background-image: url(https://picsum.photos/900/500?image=796);
     background-size: cover; // cover whole background without repeating image 
+    background-position: center;    // keep image center in the center ov viewport
 
     display: flex;
     flex-direction: column;

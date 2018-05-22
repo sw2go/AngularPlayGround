@@ -1,5 +1,5 @@
 import { Component, OnInit, HostListener } from '@angular/core';
-import { Router, NavigationStart, NavigationEnd, NavigationError, RouterEvent } from '@angular/router';
+import { Router, NavigationEnd,  RouterEvent } from '@angular/router';
 import { log } from 'util';
 import { NavService, INavSection} from './../../core/services/navservice.service';
 
@@ -19,19 +19,8 @@ export class NavbarComponent implements OnInit {
 
     router.events.subscribe( (event: RouterEvent) => {
 
-      if (event instanceof NavigationStart) {
-        console.log(event.url);
-      }
-
       if (event instanceof NavigationEnd) {
         this.inmain = (event.url == "/");
-      }
-
-      if (event instanceof NavigationError) {
-          // Hide loading indicator
-
-          // Present error to user
-          console.log(event.error);
       }
     });    
   }
