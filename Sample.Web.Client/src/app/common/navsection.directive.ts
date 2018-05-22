@@ -1,15 +1,12 @@
-import { Directive, Attribute, ElementRef, OnInit, OnDestroy} from '@angular/core';
+import { Directive, Attribute, ElementRef, OnDestroy} from '@angular/core';
 import {NavService, INavSection} from '../core/services/navservice.service';
 
 @Directive({
   selector:"[navSection]"
 })
-export class NavSectionDirective implements OnInit, OnDestroy, INavSection { 
+export class NavSectionDirective implements OnDestroy, INavSection { 
        
     constructor(@Attribute('id') private id:string,  private el: ElementRef, private ns: NavService) {
-    }
-
-    ngOnInit () {
         this.ns.add(this);
     }
 
@@ -21,20 +18,16 @@ export class NavSectionDirective implements OnInit, OnDestroy, INavSection {
         return this.id;
     }
 
-    getTop() {          
+    getOffsetTop() {          
         return this.el.nativeElement.offsetTop;
     }
 
-    scrollTo(): void {
+    scrollToOffsetTop(offset:number = 0): void {
 
-        let wait: number = 500;
-        //Scrollen zum angegebenen Anker (mit einer Verzögerung von 'wait'ms)
-        const element = document.querySelector('#' +this.id)
-        if (element) {
-          setTimeout(() => {
-          element.scrollIntoView({behavior: 'smooth', block: 'start', inline: 'nearest'})
-          }, wait)
-        }
-      } 
+        let wait: number = 250;
+        setTimeout(() => {
+        window.scroll({behavior: 'smooth', top: this.getOffsetTop() + offset})
+        }, wait);
+    } 
 
 }

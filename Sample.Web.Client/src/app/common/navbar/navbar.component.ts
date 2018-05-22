@@ -18,7 +18,6 @@ export class NavbarComponent implements OnInit {
   constructor(private router : Router, private navservice: NavService) { 
 
     router.events.subscribe( (event: RouterEvent) => {
-
       if (event instanceof NavigationEnd) {
         this.inmain = (event.url == "/");
       }
@@ -35,7 +34,7 @@ export class NavbarComponent implements OnInit {
 
     let c: INavSection = this.navservice.Current(scrollPosition);
     if (c != null)
-      console.log(c.getId());
+      console.log("act pos:" + c.getId());
   }
 
 }

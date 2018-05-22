@@ -1,22 +1,15 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
-import { NavService } from '../../core/services/navservice.service';
+import { Component, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-detailpage',
   templateUrl: './detailpage.component.html',
   styleUrls: ['./detailpage.component.scss']
 })
-export class DetailpageComponent implements OnInit, AfterViewInit {
+export class DetailpageComponent implements OnInit {
 
-  constructor(private ns: NavService) { }
+  constructor() { }
 
   ngOnInit() {
-  }
-
-  ngAfterViewInit() {
-
-    this.ns.scrollTo();
-
   }
 
 }
