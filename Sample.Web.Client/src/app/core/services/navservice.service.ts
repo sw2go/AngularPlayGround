@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 
+export interface INavRouterLink {
+  getRouterLink(): string; 
+  getFragment(): string;
+}
+
 export interface INavSection {
   getId(): string; 
   getOffsetTop(): number;
@@ -29,6 +34,8 @@ export class NavService {
 
     });
   }
+
+  private links: Array<INavRouterLink> = [];
 
   private sections: Array<INavSection> = [];
 
@@ -75,6 +82,22 @@ export class NavService {
     if (found)
       found.scrollToOffsetTop(this.headerOffset);
   }
+
+  public addLink(item: INavRouterLink) {
+    if (!this.links.some(function(i) {return i.getRouterLink() == item.getRouterLink() && i.getFragment() == item.getFragment();})) {
+      this.links.push(item);
+      console.log("add " + item.getRouterLink() + "frag " + item.getFragment() );
+    }
+  }
+
+  public removeLink(item: INavRouterLink) {
+    let found: number = this.links.findIndex(i => i.getRouterLink() == item.getRouterLink() && i.getFragment() == item.getFragment());
+    if (found>=0) {
+      this.links.splice(found,1); 
+      console.log("add " + item.getRouterLink() + "frag " + item.getFragment() );
+    } 
+  }
+
 
 
 }

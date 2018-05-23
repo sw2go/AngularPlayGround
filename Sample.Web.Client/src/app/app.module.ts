@@ -22,6 +22,7 @@ import { LandingsectionComponent } from './common/mainpage/landingsection/landin
 import { ServicesectionComponent } from './common/mainpage/servicesection/servicesection.component';
 import { NavSectionDirective } from './common/navsection.directive';
 import { NavService } from './core/services/navservice.service';
+import { NavRouterLinkDirective } from './common/navrouterlink.directive';
 
 
 
@@ -43,7 +44,8 @@ import { NavService } from './core/services/navservice.service';
     AboutpageComponent,
     LandingsectionComponent,
     ServicesectionComponent,
-    NavSectionDirective
+    NavSectionDirective,
+    NavRouterLinkDirective
     ],
   providers: [NavService],
   bootstrap: [AppComponent] // the root component
