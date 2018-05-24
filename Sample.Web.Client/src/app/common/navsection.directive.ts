@@ -2,7 +2,7 @@ import { Directive, Attribute, ElementRef, OnDestroy} from '@angular/core';
 import {NavService, INavSection} from '../core/services/navservice.service';
 
 @Directive({
-  selector:"[navSection]"
+  selector:"[navFragment]"
 })
 export class NavSectionDirective implements OnDestroy, INavSection { 
        
