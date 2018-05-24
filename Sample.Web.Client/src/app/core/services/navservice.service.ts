@@ -64,12 +64,21 @@ export class NavService {
   public Current(position:number) {
     for (let i=this.pageFragments.length - 1; i >= 0; i-- ) {
       if (position > this.pageFragments[i].getOffsetTop() + this.headerOffset) {
-        if (this.pageFragments[i].getId()==null)
-          return this.menuLinks.find(x => x.getUrl() == this.url );
-        else
-          return this.menuLinks.find(x => x.getUrl() == this.url + "#" + this.pageFragments[i].getId());
+        let r: INavRouterLink = null;
+        
+        if (this.pageFragments[i].getId()==null) {
+          r = this.menuLinks.find(x => x.getUrl() == this.url );
+          if (r==null)
+            console.log("no link found1");
+        }
+        else {
+          r = this.menuLinks.find(x => x.getUrl() == this.url + "#" + this.pageFragments[i].getId());
+          if (r==null)
+            console.log("no link found2");
+        }
       }
     }    
+    console.log("no frag found");
     return null;
   }
 
