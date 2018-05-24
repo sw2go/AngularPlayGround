@@ -1,8 +1,8 @@
 import { Component, OnInit, HostListener, ViewChildren, QueryList, AfterViewInit, ContentChildren } from '@angular/core';
 import { Router, NavigationEnd,  RouterEvent, RouterLink } from '@angular/router';
 import { log } from 'util';
-import { NavService, INavSection} from './../../core/services/navservice.service';
-import { NavSectionDirective } from '../navsection.directive';
+import { NavService, INavRouterLink} from './../../core/services/navservice.service';
+
 
 
 @Component({
@@ -42,9 +42,9 @@ export class NavbarComponent implements OnInit, AfterViewInit {
 
     this.scrolled = (scrollPosition > 5);
 
-    let c: INavSection = this.navservice.Current(scrollPosition);
-    if (c != null)
-      console.log("act pos:" + c.getId());
+    let x: INavRouterLink = this.navservice.Current(scrollPosition);
+    if (x != null)
+      console.log("curpos " + x.getUrl());
   }
 
 }

@@ -2,11 +2,12 @@ import { Injectable } from '@angular/core';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
 
 export interface INavRouterLink {
+  getUrl(): string;
   getRouterLink(): string; 
   getFragment(): string;
 }
 
-export interface INavSection {
+export interface INavFragment {
   getId(): string; 
   getOffsetTop(): number;
   scrollToOffsetTop(offset: number);
@@ -27,7 +28,7 @@ export class NavService {
         console.log("navend " + event.url);  
         this.url = event.url;   
         
-        if (this.sections.length > 0)
+        if (this.pageFragments.length > 0)
           this.scrollTo();
 
       }
@@ -35,35 +36,39 @@ export class NavService {
     });
   }
 
-  private links: Array<INavRouterLink> = [];
+  private menuLinks: Array<INavRouterLink> = [];
 
-  private sections: Array<INavSection> = [];
+  private pageFragments: Array<INavFragment> = [];
 
   /** to add directive reference to service ( before any navigation happens )  
    * call add in constructor of the directive 
    **/
-  public add(item: INavSection) {
-    if (!this.sections.some(function(i) { return i.getId() == item.getId();})) {
-      this.sections.push(item);
-      console.log("add sec " + item.getId());
+  public addFragment(item: INavFragment) {
+    if (!this.pageFragments.some(function(i) { return i.getId() == item.getId();})) {
+      this.pageFragments.push(item);
+      console.log("add frag " + item.getId());
     }
   }
 
   /** to remove directive reference from service 
    * call remove in ngOnDestroy 
    **/
-  public remove(item: INavSection) {
-    let found: number = this.sections.findIndex(i => i.getId() == item.getId());
+  public removeFragment(item: INavFragment) {
+    let found: number = this.pageFragments.findIndex(i => i.getId() == item.getId());
     if (found>=0) {
-      this.sections.splice(found,1); 
-      console.log("del sec " + item.getId())
+      this.pageFragments.splice(found,1); 
+      console.log("del frag " + item.getId())
     } 
   }
 
   public Current(position:number) {
-    for (let i=this.sections.length - 1; i >= 0; i-- ) {
-      if (position > this.sections[i].getOffsetTop() + this.headerOffset)
-        return this.sections[i];
+    for (let i=this.pageFragments.length - 1; i >= 0; i-- ) {
+      if (position > this.pageFragments[i].getOffsetTop() + this.headerOffset) {
+        if (this.pageFragments[i].getId()==null)
+          return this.menuLinks.find(x => x.getUrl() == this.url );
+        else
+          return this.menuLinks.find(x => x.getUrl() == this.url + "#" + this.pageFragments[i].getId());
+      }
     }    
     return null;
   }
@@ -71,37 +76,30 @@ export class NavService {
 
   public scrollTo() {
 
-    // if url contains anchor ( i.e. #) try to fetch the section by id
-    let found: INavSection = this.sections.find(element => this.url.endsWith("#" + element.getId()) );
+    // if url contains anchor ( i.e. #) try to fetch the fragment by id
+    let foundFragment: INavFragment = this.pageFragments.find(element => this.url.endsWith("#" + element.getId()) );
 
-    // fallback - try to find the section with no id ( i.e. page )
-    if (!found)
-      found = this.sections.find(element => element.getId() == null);
+    // fallback - try to find the fragment with no id ( i.e. page )
+    if (!foundFragment)
+      foundFragment = this.pageFragments.find(element => element.getId() == null);
 
-    // scroll to the top of the found section 
-    if (found)
-      found.scrollToOffsetTop(this.headerOffset);
+    // scroll to the top of the found fragment 
+    if (foundFragment)
+      foundFragment.scrollToOffsetTop(this.headerOffset);
   }
 
   public addLink(item: INavRouterLink) {
-    if (!this.links.some(function(i) {return i.getRouterLink() == item.getRouterLink() && i.getFragment() == item.getFragment();})) {
-      this.links.push(item);
-      if (item.getFragment() == null)
-        console.log("add link " + item.getRouterLink() );
-      else
-        console.log("add link " + item.getRouterLink() + "#" + item.getFragment() );
+    if (!this.menuLinks.some(function(i) {return i.getUrl() == item.getUrl();})) {
+      this.menuLinks.push(item);
+      console.log("add link " + item.getUrl() );
     }
   }
 
   public removeLink(item: INavRouterLink) {
-    let found: number = this.links.findIndex(i => i.getRouterLink() == item.getRouterLink() && i.getFragment() == item.getFragment());
+    let found: number = this.menuLinks.findIndex(i => i.getUrl() == item.getUrl());
     if (found>=0) {
-      this.links.splice(found,1); 
-      if (item.getFragment() == null)
-        console.log("del link " + item.getRouterLink() );
-      else
-        console.log("del link " + item.getRouterLink() + "#" + item.getFragment() );
-
+      this.menuLinks.splice(found,1); 
+      console.log("del link " + item.getUrl() );
     } 
   }
 

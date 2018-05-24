@@ -20,7 +20,7 @@ import { CarouselModule } from "ngx-bootstrap";
 import { CarouselComponent } from './common/carousel-basic/carousel-basic.component';
 import { LandingsectionComponent } from './common/mainpage/landingsection/landingsection.component';
 import { ServicesectionComponent } from './common/mainpage/servicesection/servicesection.component';
-import { NavSectionDirective } from './common/navsection.directive';
+import { NavFragmentDirective } from './common/navfragment.directive';
 import { NavService } from './core/services/navservice.service';
 import { NavRouterLinkDirective } from './common/navrouterlink.directive';
 
@@ -44,7 +44,7 @@ import { NavRouterLinkDirective } from './common/navrouterlink.directive';
     AboutpageComponent,
     LandingsectionComponent,
     ServicesectionComponent,
-    NavSectionDirective,
+    NavFragmentDirective,
     NavRouterLinkDirective
     ],
   providers: [NavService],
