@@ -45,7 +45,7 @@ export class NavService {
   public add(item: INavSection) {
     if (!this.sections.some(function(i) { return i.getId() == item.getId();})) {
       this.sections.push(item);
-      console.log("add " + item.getId());
+      console.log("add sec " + item.getId());
     }
   }
 
@@ -56,7 +56,7 @@ export class NavService {
     let found: number = this.sections.findIndex(i => i.getId() == item.getId());
     if (found>=0) {
       this.sections.splice(found,1); 
-      console.log("del " + item.getId())
+      console.log("del sec " + item.getId())
     } 
   }
 
@@ -86,7 +86,10 @@ export class NavService {
   public addLink(item: INavRouterLink) {
     if (!this.links.some(function(i) {return i.getRouterLink() == item.getRouterLink() && i.getFragment() == item.getFragment();})) {
       this.links.push(item);
-      console.log("add " + item.getRouterLink() + "frag " + item.getFragment() );
+      if (item.getFragment() == null)
+        console.log("add link " + item.getRouterLink() );
+      else
+        console.log("add link " + item.getRouterLink() + "#" + item.getFragment() );
     }
   }
 
@@ -94,7 +97,11 @@ export class NavService {
     let found: number = this.links.findIndex(i => i.getRouterLink() == item.getRouterLink() && i.getFragment() == item.getFragment());
     if (found>=0) {
       this.links.splice(found,1); 
-      console.log("add " + item.getRouterLink() + "frag " + item.getFragment() );
+      if (item.getFragment() == null)
+        console.log("del link " + item.getRouterLink() );
+      else
+        console.log("del link " + item.getRouterLink() + "#" + item.getFragment() );
+
     } 
   }
 

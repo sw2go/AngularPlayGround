@@ -1,4 +1,4 @@
-import { Directive, Attribute, ElementRef, OnDestroy, Input} from '@angular/core';
+import { Directive, Attribute, ElementRef, OnDestroy, Input, Optional} from '@angular/core';
 import {NavService, INavRouterLink} from '../core/services/navservice.service';
 
 @Directive({
@@ -6,19 +6,16 @@ import {NavService, INavRouterLink} from '../core/services/navservice.service';
 })
 export class NavRouterLinkDirective implements OnDestroy, INavRouterLink { 
        
-    constructor(@Attribute('routerLink') private routerLink:string, private el: ElementRef, private ns: NavService) {
+    constructor(@Attribute('routerLink') private routerLink:string, @Optional() @Attribute('fragment') private fragment:string, private el: ElementRef, private ns: NavService) {
         this.ns.addLink(this);
     }
-
-    @Input('fragment') 
-    public fragment: string;
 
     ngOnDestroy () {
         this.ns.removeLink(this);
     }
 
     getFragment() {
-        return "";// this.fragment;
+        return this.fragment;
     }
 
     getRouterLink() {
