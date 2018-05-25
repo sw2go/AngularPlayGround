@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import { Router, RouterEvent, NavigationEnd, UrlTree } from '@angular/router';
 
 export interface INavRouterLink {
   getUrl(): string;
@@ -11,6 +11,7 @@ export interface INavFragment {
   getId(): string; 
   getOffsetTop(): number;
   scrollToOffsetTop(offset: number);
+  routerLink: INavRouterLink;
 }
 
 @Injectable()
@@ -28,11 +29,20 @@ export class NavService {
         console.log("navend " + event.url);  
         this.url = event.url;   
         
+        // für cur pos müsste man nur die url ohne fragment herauslösen !!
+        // dann sollte das scrolling cur pos auch gehen wenn man via nav auf bla-bal steht und dann zurückscroll zu main 
+
+        
         if (this.pageFragments.length > 0)
           this.scrollTo();
 
-      }
 
+        let xx: UrlTree = this.router.parseUrl(this.router.url);
+        
+        //let p: string = "";
+        //xx.root.children.primary.segments.forEach( x => p = p + "/" + x.path)
+
+      }
     });
   }
 
@@ -64,10 +74,13 @@ export class NavService {
   public Current(position:number) {
     for (let i=this.pageFragments.length - 1; i >= 0; i-- ) {
       if (position > this.pageFragments[i].getOffsetTop() + this.headerOffset) {
-        if (this.pageFragments[i].getId()==null)
-          return this.menuLinks.find(x => x.getUrl() == this.url );
-        else
-          return this.menuLinks.find(x => x.getUrl() == this.url + "#" + this.pageFragments[i].getId());
+        // we found a matching fragment - now try to find a matching routerlink 
+        let lnk: INavRouterLink = (this.pageFragments[i].getId()==null) 
+          ? this.menuLinks.find(x => x.getUrl() == this.url)
+          : this.menuLinks.find(x => x.getUrl() == this.url + "#" + this.pageFragments[i].getId()); 
+
+        if (lnk != null)
+          return lnk;   // return found link
       }
     }    
     return null;
