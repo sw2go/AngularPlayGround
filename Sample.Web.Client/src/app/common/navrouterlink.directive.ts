@@ -1,4 +1,4 @@
-import { Directive, Attribute, ElementRef, OnDestroy, Input, Optional} from '@angular/core';
+import { Directive, Attribute, ElementRef, OnDestroy, Input, Optional, HostBinding} from '@angular/core';
 import {NavService, INavRouterLink} from '../core/services/navservice.service';
 
 @Directive({
@@ -13,6 +13,8 @@ export class NavRouterLinkDirective implements OnDestroy, INavRouterLink {
     ngOnDestroy () {
         this.ns.removeLink(this);
     }
+
+    @HostBinding('style.text-decoration') public textdecoration: string;
 
     getUrl() {
         if (this.fragment == null)

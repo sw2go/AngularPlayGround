@@ -15,9 +15,13 @@ export class NavbarComponent implements OnInit, AfterViewInit {
 
   @ViewChildren(RouterLink) anchors: QueryList<any>;
 
+  previous: INavRouterLink = null;
   collapsed: boolean = true;  // used to hide menu 
   scrolled: boolean = false;  // used to make navbar transparent 
   inmain: boolean = true;     // we are on main page 
+
+
+
 
   constructor(private router : Router, private navservice: NavService) { 
 
@@ -39,13 +43,35 @@ export class NavbarComponent implements OnInit, AfterViewInit {
   @HostListener('window:scroll', ['$event']) 
   checkScroll() {
     const scrollPosition = window.pageYOffset;
-
+    
     this.scrolled = (scrollPosition > 5);
 
     let x: INavRouterLink = this.navservice.Current(scrollPosition);
-    if (x != null)
+    if (x != null) {
       console.log("curpos " + x.getUrl());
+      
+      /*
+      if (this.previous != null && this.previous.getUrl() != x.getUrl() ) {
+        this.previous.textdecoration = "line-through"; 
+        this.previous = x;
+      }
+
+      x.textdecoration = "underline";    toDo noch schauen 
+
+      */
+
+
+    //  if (x.getUrl() != this.router.url)
+    //    this.router.navigateByUrl(x.getUrl());
+
+    }
+    else {
+      console.log("ui no INavRouterLink found" );
+    }
   }
+
+
+
 
 }
 

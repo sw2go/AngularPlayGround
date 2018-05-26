@@ -1,10 +1,11 @@
-import { Injectable } from '@angular/core';
+import { Injectable, HostListener } from '@angular/core';
 import { Router, RouterEvent, NavigationEnd, UrlTree } from '@angular/router';
 
 export interface INavRouterLink {
   getUrl(): string;
   getRouterLink(): string; 
   getFragment(): string;
+  textdecoration: string;
 }
 
 export interface INavFragment {
@@ -17,9 +18,12 @@ export interface INavFragment {
 @Injectable()
 export class NavService {
 
+  public scrolled: boolean = false;
+
   private headerOffset: number = -56;
 
   private url: string = "";
+  private urlpath: string = "";
 
   constructor(private router: Router) { 
 
@@ -27,7 +31,14 @@ export class NavService {
   
       if (event instanceof NavigationEnd) {
         console.log("navend " + event.url);  
-        this.url = event.url;   
+
+        this.url = event.url;           
+        this.urlpath = /[^#?]+/.exec(event.url)[0];
+        console.log("path " + this.urlpath);
+
+
+        
+  
         
         // für cur pos müsste man nur die url ohne fragment herauslösen !!
         // dann sollte das scrolling cur pos auch gehen wenn man via nav auf bla-bal steht und dann zurückscroll zu main 
@@ -72,27 +83,39 @@ export class NavService {
   }
 
   public Current(position:number) {
+    let p = -99;
+    let o = -99;
     for (let i=this.pageFragments.length - 1; i >= 0; i-- ) {
-      if (position > this.pageFragments[i].getOffsetTop() + this.headerOffset) {
+      p = position;
+      o = this.pageFragments[i].getOffsetTop();
+      if (position >= this.pageFragments[i].getOffsetTop() + this.headerOffset) {
         // we found a matching fragment - now try to find a matching routerlink 
         let lnk: INavRouterLink = (this.pageFragments[i].getId()==null) 
-          ? this.menuLinks.find(x => x.getUrl() == this.url)
-          : this.menuLinks.find(x => x.getUrl() == this.url + "#" + this.pageFragments[i].getId()); 
+          ? this.menuLinks.find(x => x.getUrl() == this.urlpath)
+          : this.menuLinks.find(x => x.getUrl() == this.urlpath + "#" + this.pageFragments[i].getId()); 
 
-        if (lnk != null)
-          return lnk;   // return found link
+        if (lnk != null)  // if found return link - otherwise continue loop   
+          return lnk;   
       }
     }    
-    console.log("no frag found");
-    return null;
+    return this.menuLinks.find(x => x.getUrl() == this.urlpath);
   }
 
 
   public scrollTo() {
 
-    // if url contains anchor ( i.e. #) try to fetch the fragment by id
+    // if url ends with fragment (#)
     let foundFragment: INavFragment = this.pageFragments.find(element => this.url.endsWith("#" + element.getId()) );
 
+    let scrollToPosition = (foundFragment) ? foundFragment.getOffsetTop() + this.headerOffset : 0;
+
+    let wait: number = 250;
+    setTimeout(() => {
+    window.scroll({behavior: 'smooth', top: scrollToPosition})
+    }, wait);
+
+
+/*
     // fallback - try to find the fragment with no id ( i.e. page )
     if (!foundFragment)
       foundFragment = this.pageFragments.find(element => element.getId() == null);
@@ -100,6 +123,7 @@ export class NavService {
     // scroll to the top of the found fragment 
     if (foundFragment)
       foundFragment.scrollToOffsetTop(this.headerOffset);
+      */
   }
 
   public addLink(item: INavRouterLink) {
