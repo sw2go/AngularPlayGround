@@ -109,21 +109,13 @@ export class NavService {
 
     let scrollToPosition = (foundFragment) ? foundFragment.getOffsetTop() + this.headerOffset : 0;
 
-    let wait: number = 250;
+    let wait: number = 100;
     setTimeout(() => {
     window.scroll({behavior: 'smooth', top: scrollToPosition})
     }, wait);
 
 
-/*
-    // fallback - try to find the fragment with no id ( i.e. page )
-    if (!foundFragment)
-      foundFragment = this.pageFragments.find(element => element.getId() == null);
 
-    // scroll to the top of the found fragment 
-    if (foundFragment)
-      foundFragment.scrollToOffsetTop(this.headerOffset);
-      */
   }
 
   public addLink(item: INavRouterLink) {

@@ -14,7 +14,8 @@ export class NavRouterLinkDirective implements OnDestroy, INavRouterLink {
         this.ns.removeLink(this);
     }
 
-    @HostBinding('style.text-decoration') public textdecoration: string;
+    @HostBinding('style.text-decoration') 
+    public textdecoration: string;
 
     getUrl() {
         if (this.fragment == null)

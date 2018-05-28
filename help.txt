@@ -10,7 +10,7 @@ Create Application:
   ng new Sample.Web.Client --routing true --style scss
 
 Start server at the root-folder              *** *** *** *** *** ***
-  cd c:\@github\ngsample\Sample.Web.Client      
+cd c:\@github\ngsample\Sample.Web.Client        
   ng serve -o ( http://localhost:4200/ ) 
 
 bootstrap

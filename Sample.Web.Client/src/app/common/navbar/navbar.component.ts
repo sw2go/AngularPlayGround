@@ -1,5 +1,7 @@
 import { Component, OnInit, HostListener, ViewChildren, QueryList, AfterViewInit, ContentChildren } from '@angular/core';
-import { Router, NavigationEnd,  RouterEvent, RouterLink } from '@angular/router';
+import { Router, NavigationEnd,  RouterEvent, RouterLink, RouterLinkActive } from '@angular/router';
+
+import { Location  } from '@angular/common';
 import { log } from 'util';
 import { NavService, INavRouterLink} from './../../core/services/navservice.service';
 
@@ -15,15 +17,14 @@ export class NavbarComponent implements OnInit, AfterViewInit {
 
   @ViewChildren(RouterLink) anchors: QueryList<any>;
 
-  previous: INavRouterLink = null;
   collapsed: boolean = true;  // used to hide menu 
   scrolled: boolean = false;  // used to make navbar transparent 
   inmain: boolean = true;     // we are on main page 
 
+  previous: INavRouterLink = null; 
 
 
-
-  constructor(private router : Router, private navservice: NavService) { 
+  constructor(private router : Router, private location: Location, private navservice: NavService) { 
 
     router.events.subscribe( (event: RouterEvent) => {
       if (event instanceof NavigationEnd) {
@@ -46,24 +47,19 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     
     this.scrolled = (scrollPosition > 5);
 
-    let x: INavRouterLink = this.navservice.Current(scrollPosition);
-    if (x != null) {
-      console.log("curpos " + x.getUrl());
-      
-      /*
-      if (this.previous != null && this.previous.getUrl() != x.getUrl() ) {
-        this.previous.textdecoration = "line-through"; 
-        this.previous = x;
+    let current: INavRouterLink = this.navservice.Current(scrollPosition);
+    if (current != null) {
+      console.log("curpos " + current.getUrl());
+
+      if (this.previous != current) {
+
+        if (this.previous != null) 
+          this.previous.textdecoration = "solid";
+
+        this.location.go(current.getUrl());
+        current.textdecoration = "underline";
+        this.previous = current;
       }
-
-      x.textdecoration = "underline";    toDo noch schauen 
-
-      */
-
-
-    //  if (x.getUrl() != this.router.url)
-    //    this.router.navigateByUrl(x.getUrl());
-
     }
     else {
       console.log("ui no INavRouterLink found" );
