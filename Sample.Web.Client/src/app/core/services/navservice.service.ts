@@ -1,5 +1,6 @@
 import { Injectable, HostListener } from '@angular/core';
 import { Router, RouterEvent, NavigationEnd, UrlTree } from '@angular/router';
+import { Observable, Subscription } from 'rxjs/Rx';
 import { Location  } from '@angular/common';
 
 export interface INavRouterLink {
@@ -19,14 +20,14 @@ export interface INavFragment {
 @Injectable()
 export class NavService {
 
-  public scrolled: boolean = false;
-
+  private previousNavScrollPos = -1;    // manual scrolling -1 , scroll caused by navigation >= 0
   private headerOffset: number = -56;
+
+  private sub: Subscription;
 
   private url: string = "";
   private urlpath: string = "";
 
-  private scrolltotarget: number = -1;
 
   constructor(private router: Router, private location: Location) { 
 
@@ -58,13 +59,6 @@ export class NavService {
         else {
           this.showAsActive(this.menuLinks.find(x => x.getUrl() == this.urlpath));
         }
-
-
-        let xx: UrlTree = this.router.parseUrl(this.router.url);
-        
-        //let p: string = "";
-        //xx.root.children.primary.segments.forEach( x => p = p + "/" + x.path)
-
       }
     });
   }
@@ -96,11 +90,10 @@ export class NavService {
 
   public Current(position:number) {
 
-    if (this.scrolltotarget >= 0)
-      return null;
+    if (this.previousNavScrollPos >= 0)
+      return null;  // skip during scroll by navigation
 
-
-
+    // update in case of manual scroll
     let p = -99;
     let o = -99;
     for (let i=this.pageFragments.length - 1; i >= 0; i-- ) {
@@ -138,23 +131,56 @@ export class NavService {
 
 
 
+
+
+
+
+
   public scrollTo() {
 
+    if (this.previousNavScrollPos = -1) {
     // if url ends with fragment (#)
-    let foundFragment: INavFragment = this.pageFragments.find(element => this.url.endsWith("#" + element.getId()) );
+      let foundFragment: INavFragment = this.pageFragments.find(element => this.url.endsWith("#" + element.getId()) );
 
-    let scrollToPosition = (foundFragment) ? foundFragment.getOffsetTop() + this.headerOffset : 0;
+      let scrollToFragmentPosition = (foundFragment) ? foundFragment.getOffsetTop() + this.headerOffset : 0;
 
-    this.scrolltotarget = scrollToPosition;
+      this.previousNavScrollPos = scrollToFragmentPosition;
+      
+      if (this.sub == null || this.sub.closed) {
+        console.log("sub");
+        this.sub = Observable.timer(1, 500).subscribe( tick => {
+          let newpos: number = window.pageYOffset;
+          if (this.previousNavScrollPos != newpos) {
+            console.log("p" + this.previousNavScrollPos + " n" +  newpos    );
+            this.previousNavScrollPos = newpos;
+          }
+          else {
+            console.log("unsubs");
+            this.sub.unsubscribe();
+            this.previousNavScrollPos = -1;
+            
+          }
+          console.log("ti");
+        });
+      }
 
-    let wait: number = 100;
-    setTimeout(() => {
-    window.scroll({behavior: 'smooth', top: scrollToPosition});
-    setTimeout(() => {
-      this.scrolltotarget = -1;
-      },500);
-  
-    }, wait);
+      let wait: number = 250;
+      setTimeout(() => {
+        window.scroll({behavior: 'smooth', top: scrollToFragmentPosition});
+      }, wait);
+
+
+
+
+    }
+    
+
+
+
+    //this.scrolling(this.scrollToFragmentPosition);
+
+
+
 
   }
 
