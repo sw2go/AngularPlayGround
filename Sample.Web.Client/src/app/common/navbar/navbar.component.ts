@@ -47,23 +47,8 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     
     this.scrolled = (scrollPosition > 5);
 
-    let current: INavRouterLink = this.navservice.Current(scrollPosition);
-    if (current != null) {
-      console.log("curpos " + current.getUrl());
-
-      if (this.previous != current) {
-
-        if (this.previous != null) 
-          this.previous.textdecoration = "solid";
-
-        this.location.go(current.getUrl());
-        current.textdecoration = "underline";
-        this.previous = current;
-      }
-    }
-    else {
-      console.log("ui no INavRouterLink found" );
-    }
+    this.navservice.Current(scrollPosition);
+    
   }
 
 

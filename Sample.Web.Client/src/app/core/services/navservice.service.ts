@@ -1,11 +1,12 @@
 import { Injectable, HostListener } from '@angular/core';
 import { Router, RouterEvent, NavigationEnd, UrlTree } from '@angular/router';
+import { Location  } from '@angular/common';
 
 export interface INavRouterLink {
   getUrl(): string;
   getRouterLink(): string; 
   getFragment(): string;
-  textdecoration: string;
+  showAsActive: boolean;
 }
 
 export interface INavFragment {
@@ -25,16 +26,22 @@ export class NavService {
   private url: string = "";
   private urlpath: string = "";
 
-  constructor(private router: Router) { 
+  private scrolltotarget: number = -1;
+
+  constructor(private router: Router, private location: Location) { 
 
     router.events.subscribe( (event: RouterEvent) => {
   
       if (event instanceof NavigationEnd) {
         console.log("navend " + event.url);  
 
-        this.url = event.url;           
-        this.urlpath = /[^#?]+/.exec(event.url)[0];
-        console.log("path " + this.urlpath);
+        this.url = event.url;  
+        
+        let newurlpath: string = /[^#?]+/.exec(event.url)[0];
+
+        this.urlpath =  newurlpath;
+         
+        console.log("path " + newurlpath);
 
 
         
@@ -43,9 +50,14 @@ export class NavService {
         // für cur pos müsste man nur die url ohne fragment herauslösen !!
         // dann sollte das scrolling cur pos auch gehen wenn man via nav auf bla-bal steht und dann zurückscroll zu main 
 
-        
-        if (this.pageFragments.length > 0)
+       
+        if (this.pageFragments.length > 0) {
+          this.showAsActive(this.menuLinks.find(x => x.getUrl() == this.url));
           this.scrollTo();
+        }
+        else {
+          this.showAsActive(this.menuLinks.find(x => x.getUrl() == this.urlpath));
+        }
 
 
         let xx: UrlTree = this.router.parseUrl(this.router.url);
@@ -83,6 +95,12 @@ export class NavService {
   }
 
   public Current(position:number) {
+
+    if (this.scrolltotarget >= 0)
+      return null;
+
+
+
     let p = -99;
     let o = -99;
     for (let i=this.pageFragments.length - 1; i >= 0; i-- ) {
@@ -95,11 +113,29 @@ export class NavService {
           : this.menuLinks.find(x => x.getUrl() == this.urlpath + "#" + this.pageFragments[i].getId()); 
 
         if (lnk != null)  // if found return link - otherwise continue loop   
-          return lnk;   
+          return this.showAsActive(lnk);
       }
-    }    
-    return this.menuLinks.find(x => x.getUrl() == this.urlpath);
+    }
+    return this.showAsActive(this.menuLinks.find(x => x.getUrl() == this.urlpath));
   }
+
+  private previous: INavRouterLink = null; 
+  private showAsActive(current: INavRouterLink) {
+
+    if (this.previous != current) {
+
+      if (this.previous != null) 
+        this.previous.showAsActive = false;
+
+      if(current != null) {
+        current.showAsActive = true;
+        this.location.go(current.getUrl());
+      }
+      this.previous = current;      
+    }
+    return current;
+  }
+
 
 
   public scrollTo() {
@@ -109,12 +145,16 @@ export class NavService {
 
     let scrollToPosition = (foundFragment) ? foundFragment.getOffsetTop() + this.headerOffset : 0;
 
+    this.scrolltotarget = scrollToPosition;
+
     let wait: number = 100;
     setTimeout(() => {
-    window.scroll({behavior: 'smooth', top: scrollToPosition})
+    window.scroll({behavior: 'smooth', top: scrollToPosition});
+    setTimeout(() => {
+      this.scrolltotarget = -1;
+      },500);
+  
     }, wait);
-
-
 
   }
 
