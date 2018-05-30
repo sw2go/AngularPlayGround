@@ -2,6 +2,9 @@ import { Injectable, HostListener } from '@angular/core';
 import { Router, RouterEvent, NavigationEnd, UrlTree } from '@angular/router';
 import { Observable, Subscription } from 'rxjs/Rx';
 import { Location  } from '@angular/common';
+import { fromEvent } from 'rxjs/observable/fromEvent';
+import { FromEventObservable } from 'rxjs/observable/FromEventObservable';
+import { map, debounceTime, distinct } from 'rxjs/operators';
 
 export interface INavRouterLink {
   getUrl(): string;
@@ -13,8 +16,6 @@ export interface INavRouterLink {
 export interface INavFragment {
   getId(): string; 
   getOffsetTop(): number;
-  scrollToOffsetTop(offset: number);
-  routerLink: INavRouterLink;
 }
 
 @Injectable()
@@ -28,21 +29,48 @@ export class NavService {
   private url: string = "";
   private urlpath: string = "";
 
+  private scrollpos$ = Observable.fromEvent(window, "scroll")  // create observable of window-scroll events
+    .map(()=> window.window.pageYOffset);                   // map y-offset only 
+
+  private scrollendpos$ = this.scrollpos$                         // create observable fireing only at scroll end
+    .debounceTime(200);                          
+
+  private manualScroll$ = this.scrollpos$
+    .filter(e => e > 0);
+
+
+
 
   constructor(private router: Router, private location: Location) { 
 
-    router.events.subscribe( (event: RouterEvent) => {
-  
-      if (event instanceof NavigationEnd) {
-        console.log("navend " + event.url);  
+    // default ist 'ignore', 
+    // 'reload' damit nach click auf "A" und scroll nach "B" ein click auf "A" nicht ignoriert wird   
+    this.router.onSameUrlNavigation = 'reload';
 
-        this.url = event.url;  
+    this.scrollpos$.subscribe(e =>{ 
+      this.Current(e);
+    });
+
+    this.scrollendpos$.subscribe(e =>{ 
+      console.log("jeah " + e);
+    });
+
+    let navendurl$ = router.events
+      .filter((event: RouterEvent) => {      
+        return (event instanceof NavigationEnd);
+    }).map((event: RouterEvent) => { return event.url });
+
+    
+    
+    navendurl$.subscribe( (url: string) => { 
+        this.url = url;  
         
-        let newurlpath: string = /[^#?]+/.exec(event.url)[0];
+        let newurlpath: string = /[^#?]+/.exec(url)[0];
 
         this.urlpath =  newurlpath;
          
         console.log("path " + newurlpath);
+
 
 
         
@@ -58,10 +86,10 @@ export class NavService {
         }
         else {
           this.showAsActive(this.menuLinks.find(x => x.getUrl() == this.urlpath));
-        }
-      }
+        }     
     });
   }
+
 
   private menuLinks: Array<INavRouterLink> = [];
 

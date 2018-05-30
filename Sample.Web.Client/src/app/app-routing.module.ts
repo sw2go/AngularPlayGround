@@ -9,7 +9,8 @@ import { AboutpageComponent } from './common/aboutpage/aboutpage.component';
 const routes: Routes = [ 
   { path: '', component: MainpageComponent },
   { path: 'details', component: DetailpageComponent },
-  { path: 'about', component: AboutpageComponent }
+  { path: 'about', component: AboutpageComponent } //,
+  //{ path: 's/**', redirectTo: '/**' }
 ];
 
 @NgModule({

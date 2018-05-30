@@ -1,5 +1,5 @@
 import { Directive, Attribute, ElementRef, OnDestroy} from '@angular/core';
-import {NavService, INavFragment, INavRouterLink} from '../core/services/navservice.service';
+import {NavService, INavFragment} from '../core/services/navservice.service';
 
 @Directive({
   selector:"[navFragment]"
@@ -9,8 +9,6 @@ export class NavFragmentDirective implements OnDestroy, INavFragment {
     constructor(@Attribute('id') private id:string,  private el: ElementRef, private ns: NavService) {
         this.ns.addFragment(this);
     }
-
-    public routerLink: INavRouterLink;
 
     ngOnDestroy () {
         this.ns.removeFragment(this);
@@ -23,13 +21,4 @@ export class NavFragmentDirective implements OnDestroy, INavFragment {
     getOffsetTop() {          
         return this.el.nativeElement.offsetTop;
     }
-
-    scrollToOffsetTop(offset:number = 0): void {
-
-        let wait: number = 250;
-        setTimeout(() => {
-        window.scroll({behavior: 'smooth', top: this.getOffsetTop() + offset})
-        }, wait);
-    } 
-
 }

@@ -3,7 +3,7 @@ import { Router, NavigationEnd,  RouterEvent, RouterLink, RouterLinkActive } fro
 
 import { Location  } from '@angular/common';
 import { log } from 'util';
-import { NavService, INavRouterLink} from './../../core/services/navservice.service';
+
 
 
 
@@ -21,10 +21,10 @@ export class NavbarComponent implements OnInit, AfterViewInit {
   scrolled: boolean = false;  // used to make navbar transparent 
   inmain: boolean = true;     // we are on main page 
 
-  previous: INavRouterLink = null; 
 
 
-  constructor(private router : Router, private location: Location, private navservice: NavService) { 
+
+  constructor(private router : Router, private location: Location) { 
 
     router.events.subscribe( (event: RouterEvent) => {
       if (event instanceof NavigationEnd) {
@@ -42,13 +42,8 @@ export class NavbarComponent implements OnInit, AfterViewInit {
   }
 
   @HostListener('window:scroll', ['$event']) 
-  checkScroll() {
-    const scrollPosition = window.pageYOffset;
-    
-    this.scrolled = (scrollPosition > 5);
-
-    this.navservice.Current(scrollPosition);
-    
+  checkScroll() {    
+    this.scrolled = (window.pageYOffset > 5);    
   }
 
 
