@@ -1,5 +1,5 @@
 import { Injectable, HostListener } from '@angular/core';
-import { Router, RouterEvent, NavigationEnd, UrlTree } from '@angular/router';
+import { Router, RouterEvent, NavigationEnd, UrlTree, NavigationStart } from '@angular/router';
 import { Observable, Subscription } from 'rxjs/Rx';
 import { Location  } from '@angular/common';
 import { fromEvent } from 'rxjs/observable/fromEvent';
@@ -30,14 +30,16 @@ export class NavService {
   //private url: string = "";
   private urlpath: string = "";
   
-  private scrollpos$ = Observable.fromEvent(window, "scroll")  // create observable of window-scroll events
-    .map(()=> window.window.pageYOffset);                      // map y-offset only 
+  private scrollend$ = Observable.interval(100)                   // Samplerate
+    .map(() => window.pageYOffset)                                // sample value
+    .pairwise().map((e) => e[0] - e[1])                           // f(x)'
+    .pairwise().filter(e => e[0] != 0 && e[1] == 0)               // negative edge
 
-  private scrollendpos$ = this.scrollpos$                         // create observable fireing only at scroll end
-    .debounceTime(100);                          
+  private manualScroll$ = Observable.fromEvent(window, "scroll")  // create observable of window-scroll events
+    .map(()=> window.pageYOffset)                                 // map y-offset only 
+    .filter(e => !this.scrollByNavigation);                  
 
-  private manualScroll$ = this.scrollpos$
-    .filter(e => !this.scrollByNavigation);
+    
 
   constructor(private router: Router, private location: Location) { 
 
@@ -45,42 +47,60 @@ export class NavService {
     this.router.onSameUrlNavigation = 'reload';
 
     this.manualScroll$.subscribe(e =>{ 
-      console.log("scroll-man ");
+      console.log("scroll-man " + e);
       this.Current(e);
     });
 
-    this.scrollendpos$.subscribe(e =>{ 
-      console.log("scroll-end ");
+    this.scrollend$.subscribe(e =>{ 
+      console.log("scroll-end " + e[0]);
       this.scrollByNavigation = false;
     });
+
+    let navstarturl$ = router.events
+      .filter((event: RouterEvent) => {      
+        return (event instanceof NavigationStart);
+    }).map((event: RouterEvent) => { return event.url });
+
 
     let navendurl$ = router.events
       .filter((event: RouterEvent) => {      
         return (event instanceof NavigationEnd);
     }).map((event: RouterEvent) => { return event.url });
 
+    navstarturl$.subscribe( (url: string) => { 
+      this.scrollByNavigation = true;
+    });
     
     navendurl$.subscribe( (url: string) => { 
 
-        this.urlpath = /[^#?]+/.exec(url)[0]; // path only ( no param and fragment )
+        this.urlpath = /[^#?]+/.exec(url)[0]; // path only ( without param and fragment )
 
         console.log("path " + this.urlpath);
    
+        let scrollToFragmentPosition = 0;     // default = top
+
         if (this.pageFragments.length > 0) {
           
           this.showAsActive(this.menuLinks.find(x => x.getUrl() == url));
-          let foundFragment: INavFragment = this.pageFragments.find(element => url.endsWith("#" + element.getId()) );
-          let scrollToFragmentPosition = (foundFragment) ? foundFragment.getOffsetTop() + this.headerOffset : 0;
-
-          setTimeout(() => {
-            this.scrollByNavigation = true;
-            window.scroll({behavior: 'smooth', top: scrollToFragmentPosition});
-          }, 250);  // 250 ms = wait-time
+          
+          let foundFragment: INavFragment = this.pageFragments.find(element => url.endsWith("#" + element.getId()) );          
+          if (foundFragment)          
+            scrollToFragmentPosition = foundFragment.getOffsetTop() + this.headerOffset;
         }
         else {
-          this.scrollByNavigation = true;
           this.showAsActive(this.menuLinks.find(x => x.getUrl() == this.urlpath));
-        }     
+        }
+        
+        if ( window.pageYOffset == scrollToFragmentPosition) {
+          this.scrollByNavigation = false;
+        }          
+        else {
+          setTimeout(() => {
+            console.log("scroll-sta " + window.pageYOffset);
+            window.scroll({behavior: 'smooth', top: scrollToFragmentPosition});
+          }, 1);  // 1 ms = wait-time, just to make it async
+        }
+
     });
   }
 
