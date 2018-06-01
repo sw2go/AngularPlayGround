@@ -29,12 +29,12 @@ export class NavService {
 
   //private url: string = "";
   private urlpath: string = "";
-
+  
   private scrollpos$ = Observable.fromEvent(window, "scroll")  // create observable of window-scroll events
     .map(()=> window.window.pageYOffset);                      // map y-offset only 
 
   private scrollendpos$ = this.scrollpos$                         // create observable fireing only at scroll end
-    .debounceTime(500);                          
+    .debounceTime(100);                          
 
   private manualScroll$ = this.scrollpos$
     .filter(e => !this.scrollByNavigation);
@@ -45,11 +45,12 @@ export class NavService {
     this.router.onSameUrlNavigation = 'reload';
 
     this.manualScroll$.subscribe(e =>{ 
+      console.log("scroll-man ");
       this.Current(e);
     });
 
     this.scrollendpos$.subscribe(e =>{ 
-      console.log("jeah " + e);
+      console.log("scroll-end ");
       this.scrollByNavigation = false;
     });
 
@@ -60,18 +61,19 @@ export class NavService {
 
     
     navendurl$.subscribe( (url: string) => { 
-        
+
         this.urlpath = /[^#?]+/.exec(url)[0]; // path only ( no param and fragment )
 
         console.log("path " + this.urlpath);
    
         if (this.pageFragments.length > 0) {
-          this.scrollByNavigation = true;
+          
           this.showAsActive(this.menuLinks.find(x => x.getUrl() == url));
           let foundFragment: INavFragment = this.pageFragments.find(element => url.endsWith("#" + element.getId()) );
           let scrollToFragmentPosition = (foundFragment) ? foundFragment.getOffsetTop() + this.headerOffset : 0;
 
           setTimeout(() => {
+            this.scrollByNavigation = true;
             window.scroll({behavior: 'smooth', top: scrollToFragmentPosition});
           }, 250);  // 250 ms = wait-time
         }
@@ -83,30 +85,7 @@ export class NavService {
   }
 
 
-  private menuLinks: Array<INavRouterLink> = [];
 
-  private pageFragments: Array<INavFragment> = [];
-
-  /** to add directive reference to service ( before any navigation happens )  
-   * call add in constructor of the directive 
-   **/
-  public addFragment(item: INavFragment) {
-    if (!this.pageFragments.some(function(i) { return i.getId() == item.getId();})) {
-      this.pageFragments.push(item);
-      console.log("add frag " + item.getId());
-    }
-  }
-
-  /** to remove directive reference from service 
-   * call remove in ngOnDestroy 
-   **/
-  public removeFragment(item: INavFragment) {
-    let found: number = this.pageFragments.findIndex(i => i.getId() == item.getId());
-    if (found>=0) {
-      this.pageFragments.splice(found,1); 
-      console.log("del frag " + item.getId())
-    } 
-  }
 
   public Current(position:number) {
 
@@ -193,16 +172,16 @@ export class NavService {
 
 
  //   }
-    
-
-
-
+  
     //this.scrolling(this.scrollToFragmentPosition);
-
-
-
-
   }
+
+  /**
+   * List for Directives referencing RouterLink's in Menu and Fragments on Pages  
+   */
+
+  private menuLinks: Array<INavRouterLink> = [];
+  private pageFragments: Array<INavFragment> = [];
 
   public addLink(item: INavRouterLink) {
     if (!this.menuLinks.some(function(i) {return i.getUrl() == item.getUrl();})) {
@@ -219,8 +198,20 @@ export class NavService {
     } 
   }
 
+  public addFragment(item: INavFragment) {
+    if (!this.pageFragments.some(function(i) { return i.getId() == item.getId();})) {
+      this.pageFragments.push(item);
+      console.log("add frag " + item.getId());
+    }
+  }
 
-
+  public removeFragment(item: INavFragment) {
+    let found: number = this.pageFragments.findIndex(i => i.getId() == item.getId());
+    if (found>=0) {
+      this.pageFragments.splice(found,1); 
+      console.log("del frag " + item.getId())
+    } 
+  }
 }
 
 
