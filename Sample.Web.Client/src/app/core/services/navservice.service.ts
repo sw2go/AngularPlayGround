@@ -73,35 +73,35 @@ export class NavService {
     
     navendurl$.subscribe( (url: string) => { 
 
-        this.urlpath = /[^#?]+/.exec(url)[0]; // path only ( without param and fragment )
+      this.urlpath = /[^#?]+/.exec(url)[0]; // path only ( without param and fragment )
 
-        console.log("path " + this.urlpath);
-   
-        let scrollToFragmentPosition = 0;     // default = top
+      console.log("path " + this.urlpath);
+  
+      let scrollToFragmentPosition = 0;     // default = top
 
-        if (this.pageFragments.length > 0) {
-          
-          this.showAsActive(this.menuLinks.find(x => x.getUrl() == url));
-          
-          let foundFragment: INavFragment = this.pageFragments.find(element => url.endsWith("#" + element.getId()) );          
-          if (foundFragment)          
-            scrollToFragmentPosition = foundFragment.getOffsetTop() + this.headerOffset;
-        }
-        else {
-          this.showAsActive(this.menuLinks.find(x => x.getUrl() == this.urlpath));
-        }
+      if (this.pageFragments.length > 0) {
         
-        if ( window.pageYOffset == scrollToFragmentPosition) {
-          this.scrollByNavigation = false;
-        }          
-        else {
-          setTimeout(() => {
-            console.log("scroll-sta " + window.pageYOffset);
-            window.scroll({behavior: 'smooth', top: scrollToFragmentPosition});
-          }, 1);  // 1 ms = wait-time, just to make it async
-        }
+        this.showAsActive(this.menuLinks.find(x => x.getUrl() == url));
+        
+        let foundFragment: INavFragment = this.pageFragments.find(element => url.endsWith("#" + element.getId()) );          
+        if (foundFragment)          
+          scrollToFragmentPosition = foundFragment.getOffsetTop() + this.headerOffset;
+      }
+      else {
+        this.showAsActive(this.menuLinks.find(x => x.getUrl() == this.urlpath));
+      }
+      
+      if ( window.pageYOffset == scrollToFragmentPosition) {
+        this.scrollByNavigation = false;
+      }          
+      else {
+        setTimeout(() => {
+          console.log("scroll-sta " + window.pageYOffset);
+          window.scroll({behavior: 'smooth', top: scrollToFragmentPosition});
+        }, 1);  // 1 ms = wait-time, just to make it async
+      }
 
-    });
+    });   
   }
 
 
