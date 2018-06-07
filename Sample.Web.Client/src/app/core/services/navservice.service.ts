@@ -25,6 +25,26 @@ export class NavService {
   //private previousNavScrollPos = -1;    // manual scrolling -1 , scroll caused by navigation >= 0
   private headerOffset: number = -56;
 
+  private sbn: Subscription = null;
+
+  private IsScrollByNavigation() {
+    return (this.sbn != null && !this.sbn.closed);
+  }
+
+  private SetScrollByNavigation(on: boolean) {
+    if (!this.IsScrollByNavigation()) {
+      if (on) {
+        this.sbn = this.scrollend$.subscribe(e =>{ 
+          console.log("scroll-end " + e[0]);
+          this.sbn.unsubscribe();
+        });
+      }
+    }
+    else if (!on)
+      this.sbn.unsubscribe();
+  }
+
+
   //private sub: Subscription;
 
   //private url: string = "";
@@ -37,7 +57,7 @@ export class NavService {
 
   private manualScroll$ = Observable.fromEvent(window, "scroll")  // create observable of window-scroll events
     .map(()=> window.pageYOffset)                                 // map y-offset only 
-    .filter(e => !this.scrollByNavigation);                  
+    .filter(e => !this.IsScrollByNavigation());                  
 
     
 
@@ -50,12 +70,12 @@ export class NavService {
       console.log("scroll-man " + e);
       this.Current(e);
     });
-
+/*
     this.scrollend$.subscribe(e =>{ 
       console.log("scroll-end " + e[0]);
       this.scrollByNavigation = false;
     });
-
+*/
     let navstarturl$ = router.events
       .filter((event: RouterEvent) => {      
         return (event instanceof NavigationStart);
@@ -68,7 +88,7 @@ export class NavService {
     }).map((event: RouterEvent) => { return event.url });
 
     navstarturl$.subscribe( (url: string) => { 
-      this.scrollByNavigation = true;
+      this.SetScrollByNavigation(true);
     });
     
     navendurl$.subscribe( (url: string) => { 
@@ -92,7 +112,7 @@ export class NavService {
       }
       
       if ( window.pageYOffset == scrollToFragmentPosition) {
-        this.scrollByNavigation = false;
+        this.SetScrollByNavigation(false);
       }          
       else {
         setTimeout(() => {
