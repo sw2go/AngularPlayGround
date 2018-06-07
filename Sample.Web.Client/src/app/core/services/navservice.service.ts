@@ -1,10 +1,9 @@
-import { Injectable, HostListener } from '@angular/core';
-import { Router, RouterEvent, NavigationEnd, UrlTree, NavigationStart } from '@angular/router';
-import { Observable, Subscription } from 'rxjs/Rx';
+import { Injectable} from '@angular/core';
+import { Router, RouterEvent, NavigationEnd, UrlTree, NavigationStart, ActivatedRoute } from '@angular/router';
+import { Observable, Subscription, pipe } from 'rxjs/Rx';
 import { Location  } from '@angular/common';
 import { fromEvent } from 'rxjs/observable/fromEvent';
-import { FromEventObservable } from 'rxjs/observable/FromEventObservable';
-import { map, debounceTime, distinct } from 'rxjs/operators';
+import { map, debounceTime, distinct, filter, pairwise } from 'rxjs/operators';
 
 export interface INavRouterLink {
   getUrl(): string;
@@ -21,18 +20,28 @@ export interface INavFragment {
 @Injectable()
 export class NavService {
 
-  private scrollByNavigation = false;
-  //private previousNavScrollPos = -1;    // manual scrolling -1 , scroll caused by navigation >= 0
+  // maybe read from somewhere 
   private headerOffset: number = -56;
+
+  // last navigated urlpath ( without params and/or fragment )
+  private urlpath: string = "";
+
+  // Status "ScrollByNavigation" 
+  // ---------------------------
+
+  private scrollend$ = Observable.interval(100)                 // Samplerate
+  .map(() => window.pageYOffset)                                // sample value
+  .pairwise().map((e) => e[0] - e[1])                           // f(x)'
+  .pairwise().filter(e => e[0] != 0 && e[1] == 0)               // negative edge
 
   private sbn: Subscription = null;
 
-  private IsScrollByNavigation() {
+  public get ScrollByNavigation() : boolean {
     return (this.sbn != null && !this.sbn.closed);
   }
 
   private SetScrollByNavigation(on: boolean) {
-    if (!this.IsScrollByNavigation()) {
+    if (!this.ScrollByNavigation) {
       if (on) {
         this.sbn = this.scrollend$.subscribe(e =>{ 
           console.log("scroll-end " + e[0]);
@@ -45,59 +54,39 @@ export class NavService {
   }
 
 
-  //private sub: Subscription;
-
-  //private url: string = "";
-  private urlpath: string = "";
-  
-  private scrollend$ = Observable.interval(100)                   // Samplerate
-    .map(() => window.pageYOffset)                                // sample value
-    .pairwise().map((e) => e[0] - e[1])                           // f(x)'
-    .pairwise().filter(e => e[0] != 0 && e[1] == 0)               // negative edge
-
-  private manualScroll$ = Observable.fromEvent(window, "scroll")  // create observable of window-scroll events
-    .map(()=> window.pageYOffset)                                 // map y-offset only 
-    .filter(e => !this.IsScrollByNavigation());                  
-
-    
-
-  constructor(private router: Router, private location: Location) { 
+  constructor(private router: Router, private location: Location, private activatedRoute: ActivatedRoute) { 
 
     // default ist 'ignore', 'reload' damit nach click auf "A" und scroll nach "B" ein click auf "A" nicht ignoriert wird   
     this.router.onSameUrlNavigation = 'reload';
 
-    this.manualScroll$.subscribe(e =>{ 
+    console.log("body margin Top=" + window.getComputedStyle(document.body).marginTop);
+
+
+    Observable.fromEvent(window,"scroll").pipe(                   // 1. window-scroll event
+      map(()=> window.pageYOffset),                               // 2. map y-offset only 
+      filter(e => !this.ScrollByNavigation)                       // 3. filter "manual scroll only" 
+    ).subscribe(e =>{ 
       console.log("scroll-man " + e);
       this.Current(e);
     });
-/*
-    this.scrollend$.subscribe(e =>{ 
-      console.log("scroll-end " + e[0]);
-      this.scrollByNavigation = false;
-    });
-*/
-    let navstarturl$ = router.events
-      .filter((event: RouterEvent) => {      
-        return (event instanceof NavigationStart);
-    }).map((event: RouterEvent) => { return event.url });
 
-
-    let navendurl$ = router.events
-      .filter((event: RouterEvent) => {      
-        return (event instanceof NavigationEnd);
-    }).map((event: RouterEvent) => { return event.url });
-
-    navstarturl$.subscribe( (url: string) => { 
+    router.events.pipe( // On NavigationStart -> Begin of "Scroll by Navigation"
+      filter((event: RouterEvent) => { return (event instanceof NavigationStart);}),
+      map((event: RouterEvent) => { return event.url })
+    ).subscribe((url: string) => { 
       this.SetScrollByNavigation(true);
     });
-    
-    navendurl$.subscribe( (url: string) => { 
+
+    router.events.pipe( // On NavigationEnd
+      filter((event: RouterEvent) => { return (event instanceof NavigationEnd);}),
+      map((event: RouterEvent) => { return event.url })
+    ).subscribe( (url: string) => { 
 
       this.urlpath = /[^#?]+/.exec(url)[0]; // path only ( without param and fragment )
 
       console.log("path " + this.urlpath);
   
-      let scrollToFragmentPosition = 0;     // default = top
+      let scrollToPosition = 0;     // default = top
 
       if (this.pageFragments.length > 0) {
         
@@ -105,27 +94,24 @@ export class NavService {
         
         let foundFragment: INavFragment = this.pageFragments.find(element => url.endsWith("#" + element.getId()) );          
         if (foundFragment)          
-          scrollToFragmentPosition = foundFragment.getOffsetTop() + this.headerOffset;
+          scrollToPosition = foundFragment.getOffsetTop() + this.headerOffset;
       }
       else {
         this.showAsActive(this.menuLinks.find(x => x.getUrl() == this.urlpath));
       }
       
-      if ( window.pageYOffset == scrollToFragmentPosition) {
+      if ( window.pageYOffset == scrollToPosition) {
         this.SetScrollByNavigation(false);
       }          
       else {
         setTimeout(() => {
           console.log("scroll-sta " + window.pageYOffset);
-          window.scroll({behavior: 'smooth', top: scrollToFragmentPosition});
+          window.scroll({behavior: 'smooth', top: scrollToPosition});
         }, 1);  // 1 ms = wait-time, just to make it async
       }
 
     });   
   }
-
-
-
 
   public Current(position:number) {
 
@@ -167,55 +153,7 @@ export class NavService {
     }
     return current;
   }
-
-
-
-
-
-
-
-
-  public scrollTo(url: string) {
-
-  //  if (this.previousNavScrollPos = -1) {
-    // if url ends with fragment (#)
-  //    let foundFragment: INavFragment = this.pageFragments.find(element => url.endsWith("#" + element.getId()) );
-
-    //  let scrollToFragmentPosition = (foundFragment) ? foundFragment.getOffsetTop() + this.headerOffset : 0;
-
-    //  this.previousNavScrollPos = scrollToFragmentPosition;
-      /*
-      if (this.sub == null || this.sub.closed) {
-        console.log("sub");
-        this.sub = Observable.timer(1, 500).subscribe( tick => {
-          let newpos: number = window.pageYOffset;
-          if (this.previousNavScrollPos != newpos) {
-            console.log("p" + this.previousNavScrollPos + " n" +  newpos    );
-            this.previousNavScrollPos = newpos;
-          }
-          else {
-            console.log("unsubs");
-            this.sub.unsubscribe();
-            this.previousNavScrollPos = -1;
-            
-          }
-          console.log("ti");
-        });
-      }
-      */
-   /*   let wait: number = 250;
-      setTimeout(() => {
-        window.scroll({behavior: 'smooth', top: scrollToFragmentPosition});
-      }, wait);
-
-*/
-
-
- //   }
-  
-    //this.scrolling(this.scrollToFragmentPosition);
-  }
-
+ 
   /**
    * List for Directives referencing RouterLink's in Menu and Fragments on Pages  
    */
