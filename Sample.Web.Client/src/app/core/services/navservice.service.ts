@@ -20,8 +20,8 @@ export interface INavFragment {
 @Injectable()
 export class NavService {
 
-  // maybe read from somewhere 
-  private headerOffset: number = -56;
+  // get header-offset = navbar height = marginTop of body ( see styles.scss )
+  private headerOffset: number = -parseInt(window.getComputedStyle(document.body).marginTop, 10);
 
   // last navigated urlpath ( without params and/or fragment )
   private urlpath: string = "";
@@ -29,7 +29,17 @@ export class NavService {
   // Status "ScrollByNavigation" 
   // ---------------------------
 
-  private scrollend$ = Observable.interval(100)                 // Samplerate
+  private scrollend$ = Observable.interval(100)  // Samplerate
+  .pipe(
+    map(() => window.pageYOffset),                // sample value
+    pairwise(),
+    map((e) => e[0] - e[1]),                      // f(x)'
+    pairwise(),
+    filter(e => e[0] != 0 && e[1] == 0)           // negative edge  
+  )                 
+                                  
+              
+  private scrollend1$ = Observable.interval(100)                 // Samplerate
   .map(() => window.pageYOffset)                                // sample value
   .pairwise().map((e) => e[0] - e[1])                           // f(x)'
   .pairwise().filter(e => e[0] != 0 && e[1] == 0)               // negative edge
@@ -59,7 +69,7 @@ export class NavService {
     // default ist 'ignore', 'reload' damit nach click auf "A" und scroll nach "B" ein click auf "A" nicht ignoriert wird   
     this.router.onSameUrlNavigation = 'reload';
 
-    console.log("body margin Top=" + window.getComputedStyle(document.body).marginTop);
+    console.log("header top:" + this.headerOffset    )
 
 
     Observable.fromEvent(window,"scroll").pipe(                   // 1. window-scroll event
