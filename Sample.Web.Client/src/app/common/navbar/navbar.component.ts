@@ -1,7 +1,9 @@
-import { Component, OnInit, HostListener, ViewChildren, QueryList, AfterViewInit, ContentChildren } from '@angular/core';
+import { Component, OnInit, HostListener, ViewChildren, QueryList, AfterViewInit, ContentChildren, OnDestroy } from '@angular/core';
 import { Router, NavigationEnd,  RouterEvent, RouterLink, RouterLinkActive } from '@angular/router';
 
 import { log } from 'util';
+import { NavService } from '../../core/services/navservice.service';
+import { Subscription } from 'rxjs';
 
 
 
@@ -12,7 +14,7 @@ import { log } from 'util';
   styleUrls: ['./navbar.component.scss']
   
 })
-export class NavbarComponent implements OnInit, AfterViewInit {
+export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
 
 
 
@@ -21,9 +23,9 @@ export class NavbarComponent implements OnInit, AfterViewInit {
   inmain: boolean = true;     // we are on main page 
 
 
+  private sub: Subscription;
 
-
-  constructor(private router : Router) { 
+  constructor(private router: Router, private ns: NavService ) { 
 
     router.events.subscribe( (event: RouterEvent) => {
       if (event instanceof NavigationEnd) {
@@ -33,7 +35,14 @@ export class NavbarComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit() {
+    //this.sub = this.ns.$gaggi.subscribe( x => { console.log( "geile" + x.getUrl() )})
   }
+  
+  ngOnDestroy() {
+    //this.sub.unsubscribe();
+  }
+
+
 
   ngAfterViewInit() {
   }

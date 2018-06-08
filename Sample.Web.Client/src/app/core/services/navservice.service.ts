@@ -1,9 +1,10 @@
 import { Injectable} from '@angular/core';
 import { Router, RouterEvent, NavigationEnd, UrlTree, NavigationStart, ActivatedRoute } from '@angular/router';
-import { Observable, Subscription, pipe } from 'rxjs/Rx';
+import { Observable, Subscription, pipe, Subject } from 'rxjs/Rx';
 import { Location  } from '@angular/common';
 import { fromEvent } from 'rxjs/observable/fromEvent';
 import { map, debounceTime, distinct, filter, pairwise } from 'rxjs/operators';
+import { setTimeout } from 'timers';
 
 export interface INavRouterLink {
   getUrl(): string;
@@ -26,23 +27,42 @@ export class NavService {
   // last navigated urlpath ( without params and/or fragment )
   private urlpath: string = "";
 
+  // Subject for activeRouterLink triggered in NavigationEnd and Current
+  private activeNavRouterLink = new Subject<INavRouterLink>();
+
+  private $activeNavRouterLinkChange = this.activeNavRouterLink
+  .pipe(
+    pairwise(), filter(e => e[0] != e[1])                   // change only    
+  )
+
+  public $gaggi = this.activeNavRouterLink.asObservable();
+
   // Status "ScrollByNavigation" 
   // ---------------------------
 
-  private scrollend$ = Observable.interval(100)  // Samplerate
+  private scrollend$ = Observable.interval(200)             // Samplerate
   .pipe(
-    map(() => window.pageYOffset),                // sample value
-    pairwise(),
-    map((e) => e[0] - e[1]),                      // f(x)'
-    pairwise(),
-    filter(e => e[0] != 0 && e[1] == 0)           // negative edge  
+    map(() => window.pageYOffset),                          // sample value
+    pairwise(), map((e) => { 
+       
+      if (this.target) {
+        if ( this.target.getOffsetTop() + this.headerOffset != this.targetpos) {
+        console.log("rescroll " + (this.target.getOffsetTop() + this.headerOffset) + " " + this.targetpos);
+        this.scrollToTarget();    // rescroll da in der zwischenzeit das fragment eine andere position hat
+        }
+      }
+      return {diff: e[0] - e[1], y:e[1]} 
+    
+    } ),                  // f(x)'
+    pairwise(), filter((e) => e[0].diff != 0 && e[1].diff == 0)         // negative edge  
   )                 
                                   
-              
-  private scrollend1$ = Observable.interval(100)                 // Samplerate
-  .map(() => window.pageYOffset)                                // sample value
+/*      
+  private scrollend1$ = Observable.interval(100)            // Samplerate
+  .map(() => window.pageYOffset)                            // sample value
   .pairwise().map((e) => e[0] - e[1])                           // f(x)'
   .pairwise().filter(e => e[0] != 0 && e[1] == 0)               // negative edge
+*/
 
   private sbn: Subscription = null;
 
@@ -53,24 +73,42 @@ export class NavService {
   private SetScrollByNavigation(on: boolean) {
     if (!this.ScrollByNavigation) {
       if (on) {
-        this.sbn = this.scrollend$.subscribe(e =>{ 
-          console.log("scroll-end " + e[0]);
-          this.sbn.unsubscribe();
+        this.sbn = this.scrollend$.subscribe((e) =>{ 
+          console.log("scroll-end " + e[0].diff);
+
+          if ( this.target && this.target.getOffsetTop() + this.headerOffset == e[0].y )
+            this.sbn.unsubscribe();
+      //    else
+        //    this.scrollToTarget();
         });
       }
     }
-    else if (!on)
+    else if (!on) {
+      console.log("scroll-unsub");
       this.sbn.unsubscribe();
+    }
   }
 
+ 
 
   constructor(private router: Router, private location: Location, private activatedRoute: ActivatedRoute) { 
 
     // default ist 'ignore', 'reload' damit nach click auf "A" und scroll nach "B" ein click auf "A" nicht ignoriert wird   
     this.router.onSameUrlNavigation = 'reload';
 
-    console.log("header top:" + this.headerOffset    )
+    console.log("header top:" + this.headerOffset)
+  
+    this.$activeNavRouterLinkChange.subscribe( e => {
+      if (e[0]) { 
+        e[0].showAsActive = false;
+      }
+      if (e[1]) {
+        e[1].showAsActive = true;
+        this.location.go(e[1].getUrl());
+      }
+    });
 
+    this.activeNavRouterLink.next(null);                          // initial value
 
     Observable.fromEvent(window,"scroll").pipe(                   // 1. window-scroll event
       map(()=> window.pageYOffset),                               // 2. map y-offset only 
@@ -92,7 +130,9 @@ export class NavService {
       map((event: RouterEvent) => { return event.url })
     ).subscribe( (url: string) => { 
 
-      this.urlpath = /[^#?]+/.exec(url)[0]; // path only ( without param and fragment )
+      let up: string = /[^#?]+/.exec(url)[0]; // path only ( without param and fragment )
+      let pagereload = up != this.urlpath;
+      this.urlpath = up;
 
       console.log("path " + this.urlpath);
   
@@ -102,9 +142,9 @@ export class NavService {
         
         this.showAsActive(this.menuLinks.find(x => x.getUrl() == url));
         
-        let foundFragment: INavFragment = this.pageFragments.find(element => url.endsWith("#" + element.getId()) );          
-        if (foundFragment)          
-          scrollToPosition = foundFragment.getOffsetTop() + this.headerOffset;
+        this.target = this.pageFragments.find(element => url.endsWith("#" + element.getId()) );          
+        if (this.target)          
+          scrollToPosition = this.target.getOffsetTop() + this.headerOffset;
       }
       else {
         this.showAsActive(this.menuLinks.find(x => x.getUrl() == this.urlpath));
@@ -114,14 +154,36 @@ export class NavService {
         this.SetScrollByNavigation(false);
       }          
       else {
+
+        this.scrollToTarget();  // initial start of scroll by navigation
+      /*
         setTimeout(() => {
-          console.log("scroll-sta " + window.pageYOffset);
-          window.scroll({behavior: 'smooth', top: scrollToPosition});
-        }, 1);  // 1 ms = wait-time, just to make it async
+          scrollToPosition = (foundFragment) ? foundFragment.getOffsetTop() + this.headerOffset : 0;
+
+          console.log("scroll-sta " + window.pageYOffset + " to " +  scrollToPosition);
+          if (foundFragment && foundFragment.getOffsetTop() !=  scrollToPosition)
+          {
+            console.log("ui " + foundFragment.getOffsetTop() );
+          }
+          window.scroll({behavior: 'smooth', top: scrollToPosition});   // instant smooth
+        }, 50);  // 1 ms = wait-time, just to make it async
+
+        */
       }
 
     });   
   }
+
+  private targetpos: number = 0;
+  private target: INavFragment = null;
+  private scrollToTarget() {
+    this.targetpos = (this.target) ? this.target.getOffsetTop() + this.headerOffset : 0;
+    setTimeout(() => {      
+      window.scroll({behavior: 'smooth', top:this.targetpos}); 
+    },0);
+  }
+
+
 
   public Current(position:number) {
 
@@ -149,6 +211,9 @@ export class NavService {
 
   private previous: INavRouterLink = null; 
   private showAsActive(current: INavRouterLink) {
+
+    this.activeNavRouterLink.next(current);
+    return;
 
     if (this.previous != current) {
 
