@@ -4,7 +4,7 @@ import { Observable, Subscription, pipe, Subject } from 'rxjs/Rx';
 import { Location  } from '@angular/common';
 import { fromEvent } from 'rxjs/observable/fromEvent';
 import { map, debounceTime, distinct, filter, pairwise } from 'rxjs/operators';
-import { setTimeout } from 'timers';
+
 
 export interface INavRouterLink {
   getUrl(): string;
@@ -18,24 +18,62 @@ export interface INavFragment {
   getOffsetTop(): number;
 }
 
+class Target {
+  private fragment: INavFragment;
+  private offset: number;
+  public Position: number;
+  constructor(offset: number) {
+    this.offset = offset; 
+  }
+
+  public Set(fragment : INavFragment) {
+    this.fragment = fragment;
+    this.Position = (fragment) ? fragment.getOffsetTop() + this.offset : 0;
+  }
+  
+  public get IsFragment() : boolean {
+    return (this.fragment!=null);
+  }
+  public ScrollToPosition() {
+    setTimeout(() => {      
+      window.scroll({behavior: 'smooth', top:this.Position}); 
+    },0);
+  }
+
+  public get PositionHasChanged() : boolean {
+    if (this.IsFragment) {
+      let p = this.fragment.getOffsetTop() + this.offset;
+      if (p != this.Position) {
+        this.Position = p;
+        return true;
+      }
+      return false;
+    }
+  }
+}
+
+
+
+
 @Injectable()
 export class NavService {
 
   // get header-offset = navbar height = marginTop of body ( see styles.scss )
   private headerOffset: number = -parseInt(window.getComputedStyle(document.body).marginTop, 10);
 
+  private tg = new Target(this.headerOffset);
+
   // last navigated urlpath ( without params and/or fragment )
   private urlpath: string = "";
 
   // Subject for activeRouterLink triggered in NavigationEnd and Current
-  private activeNavRouterLink = new Subject<INavRouterLink>();
-
-  private $activeNavRouterLinkChange = this.activeNavRouterLink
-  .pipe(
+  private showActiveSubject = new Subject<INavRouterLink>();  
+  private $showActiv = this.showActiveSubject               // show
+  .pipe( 
     pairwise(), filter(e => e[0] != e[1])                   // change only    
-  )
+  )             
 
-  public $gaggi = this.activeNavRouterLink.asObservable();
+  public $gaggi = this.showActiveSubject.asObservable();
 
   // Status "ScrollByNavigation" 
   // ---------------------------
@@ -44,13 +82,13 @@ export class NavService {
   .pipe(
     map(() => window.pageYOffset),                          // sample value
     pairwise(), map((e) => { 
-       
+       /*
       if (this.target) {
         if ( this.target.getOffsetTop() + this.headerOffset != this.targetpos) {
         console.log("rescroll " + (this.target.getOffsetTop() + this.headerOffset) + " " + this.targetpos);
         this.scrollToTarget();    // rescroll da in der zwischenzeit das fragment eine andere position hat
         }
-      }
+      } */
       return {diff: e[0] - e[1], y:e[1]} 
     
     } ),                  // f(x)'
@@ -75,11 +113,10 @@ export class NavService {
       if (on) {
         this.sbn = this.scrollend$.subscribe((e) =>{ 
           console.log("scroll-end " + e[0].diff);
-
-          if ( this.target && this.target.getOffsetTop() + this.headerOffset == e[0].y )
-            this.sbn.unsubscribe();
-      //    else
-        //    this.scrollToTarget();
+            if (this.tg.PositionHasChanged)
+              this.tg.ScrollToPosition();
+            else if (this.tg.Position == e[0].y)
+              this.sbn.unsubscribe();
         });
       }
     }
@@ -98,17 +135,12 @@ export class NavService {
 
     console.log("header top:" + this.headerOffset)
   
-    this.$activeNavRouterLinkChange.subscribe( e => {
-      if (e[0]) { 
-        e[0].showAsActive = false;
-      }
-      if (e[1]) {
-        e[1].showAsActive = true;
-        this.location.go(e[1].getUrl());
-      }
+    this.$showActiv.subscribe( e => {
+      if (e[0]) { e[0].showAsActive = false; }                    // set previous inactive ( only initial value is null )
+      e[1].showAsActive = true;                                   // set current active
+      this.location.go(e[1].getUrl());                            // update url in browser
     });
-
-    this.activeNavRouterLink.next(null);                          // initial value
+    this.showActiveSubject.next(null);                          // emit initial value null
 
     Observable.fromEvent(window,"scroll").pipe(                   // 1. window-scroll event
       map(()=> window.pageYOffset),                               // 2. map y-offset only 
@@ -141,21 +173,25 @@ export class NavService {
       if (this.pageFragments.length > 0) {
         
         this.showAsActive(this.menuLinks.find(x => x.getUrl() == url));
-        
-        this.target = this.pageFragments.find(element => url.endsWith("#" + element.getId()) );          
-        if (this.target)          
+        this.tg.Set(this.pageFragments.find(element => url.endsWith("#" + element.getId()) ));
+
+        if (!this.tg.IsFragment)
+          this.showAsActive(this.menuLinks.find(x => x.getUrl() == this.urlpath));
+/*
+        this.target = this.pageFragments.find(element => url.endsWith("#" + element.getId()) );     
+      if (this.target)          
           scrollToPosition = this.target.getOffsetTop() + this.headerOffset;
       }
       else {
         this.showAsActive(this.menuLinks.find(x => x.getUrl() == this.urlpath));
       }
-      
-      if ( window.pageYOffset == scrollToPosition) {
-        this.SetScrollByNavigation(false);
-      }          
-      else {
-
-        this.scrollToTarget();  // initial start of scroll by navigation
+  */    
+        if (window.pageYOffset == this.tg.Position) {
+          this.SetScrollByNavigation(false);
+        }          
+        else {
+          this.tg.ScrollToPosition();
+        //this.scrollToTarget();  // initial start of scroll by navigation
       /*
         setTimeout(() => {
           scrollToPosition = (foundFragment) ? foundFragment.getOffsetTop() + this.headerOffset : 0;
@@ -170,10 +206,11 @@ export class NavService {
 
         */
       }
-
+    }
     });   
   }
 
+  /*
   private targetpos: number = 0;
   private target: INavFragment = null;
   private scrollToTarget() {
@@ -183,7 +220,7 @@ export class NavService {
     },0);
   }
 
-
+*/
 
   public Current(position:number) {
 
@@ -209,12 +246,12 @@ export class NavService {
     return this.showAsActive(this.menuLinks.find(x => x.getUrl() == this.urlpath));
   }
 
-  private previous: INavRouterLink = null; 
+  //private previous: INavRouterLink = null; 
   private showAsActive(current: INavRouterLink) {
 
-    this.activeNavRouterLink.next(current);
+    this.showActiveSubject.next(current);
     return;
-
+/*
     if (this.previous != current) {
 
       if (this.previous != null) 
@@ -227,6 +264,7 @@ export class NavService {
       this.previous = current;      
     }
     return current;
+    */
   }
  
   /**
