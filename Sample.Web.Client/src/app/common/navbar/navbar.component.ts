@@ -50,7 +50,6 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
   @HostListener('window:scroll', ['$event']) 
   checkScroll() {    
     this.scrolled = (window.pageYOffset > 5); 
-    console.log(window.pageYOffset)   ;
   }
 
 

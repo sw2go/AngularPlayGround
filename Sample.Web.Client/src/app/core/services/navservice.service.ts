@@ -6,6 +6,9 @@ import { fromEvent } from 'rxjs/observable/fromEvent';
 import { map, debounceTime, distinct, filter, pairwise } from 'rxjs/operators';
 
 
+// TODO click auf ABOUT3 dann page reload und dann manuell scrollen sollte gehen
+
+
 export interface INavRouterLink {
   getUrl(): string;
   getRouterLink(): string; 
@@ -36,6 +39,7 @@ class Target {
   }
   public ScrollToPosition() {
     setTimeout(() => {      
+      console.log("scrollto:" + this.Position );
       window.scroll({behavior: 'smooth', top:this.Position}); 
     },0);
   }
@@ -53,15 +57,14 @@ class Target {
 }
 
 
-
-
 @Injectable()
 export class NavService {
 
-  // get header-offset = navbar height = marginTop of body ( see styles.scss )
+  // get header-offset = navbar height = marginTop of body ( defined at a single place - see styles.scss )
   private headerOffset: number = -parseInt(window.getComputedStyle(document.body).marginTop, 10);
 
-  private tg = new Target(this.headerOffset);
+  // class keeping current navigation target position
+  private navtarget = new Target(this.headerOffset);
 
   // last navigated urlpath ( without params and/or fragment )
   private urlpath: string = "";
@@ -69,8 +72,8 @@ export class NavService {
   // Subject for activeRouterLink triggered in NavigationEnd and Current
   private showActiveSubject = new Subject<INavRouterLink>();  
   private $showActiv = this.showActiveSubject               // show
-  .pipe( 
-    pairwise(), filter(e => e[0] != e[1])                   // change only    
+  .pipe(                                                    // NavRouterLink
+    pairwise(), filter(e => e[0] != e[1])                   // trigger on change only    
   )             
 
   public $gaggi = this.showActiveSubject.asObservable();
@@ -80,31 +83,17 @@ export class NavService {
 
   private scrollend$ = Observable.interval(200)             // Samplerate
   .pipe(
-    map(() => window.pageYOffset),                          // sample value
+    map(() => window.pageYOffset),                          // sample value = page Y Offset
     pairwise(), map((e) => { 
-       /*
-      if (this.target) {
-        if ( this.target.getOffsetTop() + this.headerOffset != this.targetpos) {
-        console.log("rescroll " + (this.target.getOffsetTop() + this.headerOffset) + " " + this.targetpos);
-        this.scrollToTarget();    // rescroll da in der zwischenzeit das fragment eine andere position hat
-        }
-      } */
-      return {diff: e[0] - e[1], y:e[1]} 
-    
-    } ),                  // f(x)'
-    pairwise(), filter((e) => e[0].diff != 0 && e[1].diff == 0)         // negative edge  
+      return {diff: e[0] - e[1], pos: e[1]}                 // get diff and pos 
+    }),                  
+    pairwise(), 
+    filter((e) => e[0].diff != 0 && e[1].diff == 0)         // trigger on negative edge only  
   )                 
                                   
-/*      
-  private scrollend1$ = Observable.interval(100)            // Samplerate
-  .map(() => window.pageYOffset)                            // sample value
-  .pairwise().map((e) => e[0] - e[1])                           // f(x)'
-  .pairwise().filter(e => e[0] != 0 && e[1] == 0)               // negative edge
-*/
+  private sbn: Subscription = null;                         // Subscription to allow unsubscribe at scrollend
 
-  private sbn: Subscription = null;
-
-  public get ScrollByNavigation() : boolean {
+  public get ScrollByNavigation() : boolean {               
     return (this.sbn != null && !this.sbn.closed);
   }
 
@@ -112,10 +101,10 @@ export class NavService {
     if (!this.ScrollByNavigation) {
       if (on) {
         this.sbn = this.scrollend$.subscribe((e) =>{ 
-          console.log("scroll-end " + e[0].diff);
-            if (this.tg.PositionHasChanged)
-              this.tg.ScrollToPosition();
-            else if (this.tg.Position == e[0].y)
+          console.log("scroll-end diff:" + e[0].diff + " pos:" + Math.round(e[0].pos));
+            if (this.navtarget.PositionHasChanged)
+              this.navtarget.ScrollToPosition();
+            else if (this.navtarget.Position == Math.round(e[0].pos))
               this.sbn.unsubscribe();
         });
       }
@@ -126,7 +115,6 @@ export class NavService {
     }
   }
 
- 
 
   constructor(private router: Router, private location: Location, private activatedRoute: ActivatedRoute) { 
 
@@ -140,7 +128,7 @@ export class NavService {
       e[1].showAsActive = true;                                   // set current active
       this.location.go(e[1].getUrl());                            // update url in browser
     });
-    this.showActiveSubject.next(null);                          // emit initial value null
+    this.showActiveSubject.next(null);                            // emit initial dummy value null to get a change when first real value arrives 
 
     Observable.fromEvent(window,"scroll").pipe(                   // 1. window-scroll event
       map(()=> window.pageYOffset),                               // 2. map y-offset only 
@@ -172,99 +160,37 @@ export class NavService {
 
       if (this.pageFragments.length > 0) {
         
-        this.showAsActive(this.menuLinks.find(x => x.getUrl() == url));
-        this.tg.Set(this.pageFragments.find(element => url.endsWith("#" + element.getId()) ));
+        this.showActiveSubject.next(this.menuLinks.find(x => x.getUrl() == url));
+        this.navtarget.Set(this.pageFragments.find(element => url.endsWith("#" + element.getId()) ));
 
-        if (!this.tg.IsFragment)
-          this.showAsActive(this.menuLinks.find(x => x.getUrl() == this.urlpath));
-/*
-        this.target = this.pageFragments.find(element => url.endsWith("#" + element.getId()) );     
-      if (this.target)          
-          scrollToPosition = this.target.getOffsetTop() + this.headerOffset;
-      }
-      else {
-        this.showAsActive(this.menuLinks.find(x => x.getUrl() == this.urlpath));
-      }
-  */    
-        if (window.pageYOffset == this.tg.Position) {
+        if (!this.navtarget.IsFragment)
+          this.showActiveSubject.next(this.menuLinks.find(x => x.getUrl() == this.urlpath));
+   
+        if (window.pageYOffset == this.navtarget.Position) {
           this.SetScrollByNavigation(false);
         }          
         else {
-          this.tg.ScrollToPosition();
-        //this.scrollToTarget();  // initial start of scroll by navigation
-      /*
-        setTimeout(() => {
-          scrollToPosition = (foundFragment) ? foundFragment.getOffsetTop() + this.headerOffset : 0;
-
-          console.log("scroll-sta " + window.pageYOffset + " to " +  scrollToPosition);
-          if (foundFragment && foundFragment.getOffsetTop() !=  scrollToPosition)
-          {
-            console.log("ui " + foundFragment.getOffsetTop() );
-          }
-          window.scroll({behavior: 'smooth', top: scrollToPosition});   // instant smooth
-        }, 50);  // 1 ms = wait-time, just to make it async
-
-        */
+          this.navtarget.ScrollToPosition();
+        }
       }
-    }
     });   
   }
 
-  /*
-  private targetpos: number = 0;
-  private target: INavFragment = null;
-  private scrollToTarget() {
-    this.targetpos = (this.target) ? this.target.getOffsetTop() + this.headerOffset : 0;
-    setTimeout(() => {      
-      window.scroll({behavior: 'smooth', top:this.targetpos}); 
-    },0);
-  }
-
-*/
-
   public Current(position:number) {
-
-  //  if (this.scrollByNavigation)
-  //    return null;  // skip during scroll by navigation
-
-    // update in case of manual scroll
-    let p = -99;
-    let o = -99;
     for (let i=this.pageFragments.length - 1; i >= 0; i-- ) {
-      p = position;
-      o = this.pageFragments[i].getOffsetTop();
       if (position >= this.pageFragments[i].getOffsetTop() + this.headerOffset) {
         // we found a matching fragment - now try to find a matching routerlink 
         let lnk: INavRouterLink = (this.pageFragments[i].getId()==null) 
           ? this.menuLinks.find(x => x.getUrl() == this.urlpath)
           : this.menuLinks.find(x => x.getUrl() == this.urlpath + "#" + this.pageFragments[i].getId()); 
 
-        if (lnk != null)  // if found return link - otherwise continue loop   
-          return this.showAsActive(lnk);
+        if (lnk != null) { // if found return link - otherwise continue loop   
+          this.showActiveSubject.next(lnk);
+          return;
+        }
       }
     }
-    return this.showAsActive(this.menuLinks.find(x => x.getUrl() == this.urlpath));
-  }
-
-  //private previous: INavRouterLink = null; 
-  private showAsActive(current: INavRouterLink) {
-
-    this.showActiveSubject.next(current);
-    return;
-/*
-    if (this.previous != current) {
-
-      if (this.previous != null) 
-        this.previous.showAsActive = false;
-
-      if(current != null) {
-        current.showAsActive = true;
-        this.location.go(current.getUrl());
-      }
-      this.previous = current;      
-    }
-    return current;
-    */
+    this.showActiveSubject.next(this.menuLinks.find(x => x.getUrl() == this.urlpath));
   }
  
   /**
