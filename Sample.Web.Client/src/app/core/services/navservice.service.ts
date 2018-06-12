@@ -88,7 +88,7 @@ export class NavService {
       return {diff: e[0] - e[1], pos: e[1]}                 // get diff and pos 
     }),                  
     pairwise(), 
-    filter((e) => e[0].diff != 0 && e[1].diff == 0)         // trigger on negative edge only  
+    filter((e) => e[0].diff != 0 && e[1].diff == 0)
   )                 
                                   
   private sbn: Subscription = null;                         // Subscription to allow unsubscribe at scrollend
