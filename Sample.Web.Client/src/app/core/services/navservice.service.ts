@@ -3,7 +3,7 @@ import { Router, RouterEvent, NavigationEnd, UrlTree, NavigationStart, Activated
 import { Observable, Subscription, pipe, Subject } from 'rxjs/Rx';
 import { Location  } from '@angular/common';
 import { fromEvent } from 'rxjs/observable/fromEvent';
-import { map, debounceTime, distinct, filter, pairwise } from 'rxjs/operators';
+import { map, distinct, filter, pairwise } from 'rxjs/operators';
 
 
 // TODO click auf ABOUT3 dann page reload und dann manuell scrollen sollte gehen
