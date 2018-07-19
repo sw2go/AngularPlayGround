@@ -77,3 +77,7 @@ import 'zone.js/dist/zone';  // Included with Angular CLI.
 /***************************************************************************************************
  * APPLICATION IMPORTS
  */
+// npm install smoothscroll-polyfill --save ( required for edge and ie support of window.scroll)
+import * as smoothscroll from 'smoothscroll-polyfill/dist/smoothscroll.js';
+smoothscroll.polyfill();
+

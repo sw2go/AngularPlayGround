@@ -4,6 +4,7 @@ export class Target {
     private fragment: FragmentInterface;
     private offset: number;
     public Position: number;
+    
     constructor(offset: number) {
       this.offset = offset; 
     }
@@ -18,10 +19,14 @@ export class Target {
     }
   
     public ScrollToPosition() {
-      setTimeout(() => {      
+      setTimeout(() => {   
         this.Set(this.fragment); // to update Position to the most current fragment position
         console.log("scroll-to:" + this.Position );
-        window.scroll({behavior: 'smooth', top:this.Position}); 
+        window.scroll({behavior: 'smooth', top:this.Position}); // start scrolling
+        setTimeout(() => {                                      // .. after 50 ms
+          if (this.PositionHasChanged)                          // check for position-setpoint change ( due to slow page loading )
+            this.ScrollToPosition();                            // and retrigger scroll with new position-setpoint
+        }, 50);                                                
       },0);
     }
   

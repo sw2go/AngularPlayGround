@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy, Inject } from '@angular/core';
 import { Location } from '@angular/common';
-import { Router, RouterEvent, NavigationEnd, NavigationStart, ActivatedRoute } from '@angular/router';
+import { Router, RouterEvent, NavigationEnd, NavigationStart, UrlSegment } from '@angular/router';
 import { interval } from 'rxjs/observable/interval';
 import { fromEvent } from 'rxjs/observable/fromEvent';
 import { Subject } from 'rxjs/Subject';
@@ -12,7 +12,8 @@ import { Target } from '../models/target';
 import { LsNavigationConfigService } from './ls-navigation-config.service';
 import { LsNavigationConfigInterface } from '../models/ls-navigation-config.interface';
 
-// TODO click auf ABOUT3 dann page reload und dann manuell scrollen sollte gehen
+// Attention: ActivatedRoute is only usable in Components but not in a service !!!
+
 
 @Injectable()
 export class LsNavigationService implements OnDestroy  {
@@ -53,6 +54,9 @@ export class LsNavigationService implements OnDestroy  {
     takeUntil(this.destroy$)  
   )
 
+
+
+
   private scrollend$ = interval(200)                            // Observable with a Samplerate
   .pipe(
     map(() => window.pageYOffset),                              // sample value = page Y Offset
@@ -73,12 +77,15 @@ export class LsNavigationService implements OnDestroy  {
   private SetScrollByNavigation(on: boolean) {
     if (!this.ScrollByNavigation) {
       if (on) {
+        console.log("scrollbynav-sub");
         this.sbn = this.scrollend$.subscribe((e) =>{ 
           console.log("scroll-end diff:" + e[0].diff + " pos:" + Math.round(e[0].pos));
             if (this.navtarget.PositionHasChanged)
               this.navtarget.ScrollToPosition();
-            else //if (this.navtarget.Position == Math.round(e[0].pos))   // unbedingtes unsubscribe damit, falls die Zielposition nicht erreicht werden kann,
-              this.sbn.unsubscribe();                                     // trotzdem wieder "manuell" scrolling geht 
+            else { //if (this.navtarget.Position == Math.round(e[0].pos))   // unbedingtes unsubscribe damit, falls die Zielposition nicht erreicht werden kann,
+              console.log("scrollbynav-unsub");                               // trotzdem wieder "manuell" scrolling geht
+              this.sbn.unsubscribe();    
+            }                                  
         });
       }
     }
@@ -89,7 +96,7 @@ export class LsNavigationService implements OnDestroy  {
   }
 
 
-  constructor(private router: Router, private location: Location, private activatedRoute: ActivatedRoute,
+  constructor(private router: Router, private location: Location,
     @Inject(LsNavigationConfigService) private config: LsNavigationConfigInterface) { 
 
     this.navtarget = new Target(this.config.headerOffset);
@@ -143,24 +150,35 @@ export class LsNavigationService implements OnDestroy  {
     });
 
     this.routerNavigationStart$.subscribe((url: string) => { 
+
       //if (this.muteNavigationEvents)
       //  return;
       
-      this.SetScrollByNavigation(true);
+      //this.SetScrollByNavigation(true);
     });
 
     this.routerNavigationEnd$.subscribe( (url: string) => { 
-     // if (this.muteNavigationEvents) {
+    
+    //this.routerNavEnd$.subscribe( (urlseg: UrlSegment[]) => {
+    //  let url: string = urlseg.map(x => x.path).join("/");
+
+    // if (this.muteNavigationEvents) {
      //   this.muteNavigationEvents = false;
      //   return;
      // }
-
+     this.SetScrollByNavigation(true);
+      
 
       this.navurlpath = /[^#?]+/.exec(url)[0]; // path only ( without param and fragment )
 
       let fx = url.lastIndexOf('#')
       let navurlpathwithfragment = (fx>0) ? this.navurlpath + url.substr(fx) : this.navurlpath;
     
+
+
+
+
+
       console.log("navurlpath " + this.navurlpath);
       console.log("pathWithfragment " + navurlpathwithfragment);
   
