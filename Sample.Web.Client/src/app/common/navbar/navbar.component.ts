@@ -2,7 +2,7 @@ import { Component, OnInit, HostListener, ViewChildren, QueryList, AfterViewInit
 import { Router, NavigationEnd,  RouterEvent, RouterLink, RouterLinkActive } from '@angular/router';
 
 import { log } from 'util';
-import { NavService } from '../../core/services/navservice.service';
+
 import { Subscription } from 'rxjs';
 
 
@@ -25,7 +25,7 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private sub: Subscription;
 
-  constructor(private router: Router, private ns: NavService ) { 
+  constructor(private router: Router ) { 
 
     router.events.subscribe( (event: RouterEvent) => {
       if (event instanceof NavigationEnd) {

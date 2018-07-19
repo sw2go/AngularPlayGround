@@ -1,12 +1,13 @@
 import { Directive, Attribute, ElementRef, OnDestroy, AfterViewInit} from '@angular/core';
-import {NavService, INavFragment} from '../core/services/navservice.service';
+import { FragmentInterface } from '../internal/fragment.interface';
+import { LsNavigationService } from '../services/ls-navigation-service.service';
 
 @Directive({
-  selector:"[navFragment]"
+  selector:"[ls-navigation-fragment]"
 })
-export class NavFragmentDirective implements OnDestroy, INavFragment, AfterViewInit { 
+export class LsNavigationFragmentDirective implements OnDestroy, FragmentInterface, AfterViewInit { 
        
-    constructor(@Attribute('id') private id:string,  private el: ElementRef, private ns: NavService) {
+    constructor(@Attribute('id') private id:string,  private el: ElementRef, private ns: LsNavigationService) {
         this.ns.addFragment(this);
     }
 
@@ -14,7 +15,6 @@ export class NavFragmentDirective implements OnDestroy, INavFragment, AfterViewI
         console.log("afterviewinit " + this.id);
     }
     
-
     ngOnDestroy () {
         this.ns.removeFragment(this);
     }

@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { RouterModule } from '@angular/router';
-import { NavService } from './services/navservice.service';
+
 
 
 @NgModule({
@@ -10,7 +10,7 @@ import { NavService } from './services/navservice.service';
     CommonModule
   ],
   declarations: [],
-  providers: [NavService],
+  providers: [],
     exports: []
 })
 export class CoreModule { }

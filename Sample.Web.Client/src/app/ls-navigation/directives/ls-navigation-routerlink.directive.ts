@@ -1,12 +1,13 @@
 import { Directive, Attribute, ElementRef, OnDestroy, Input, Optional, HostBinding} from '@angular/core';
-import {NavService, INavRouterLink} from '../core/services/navservice.service';
+import { LinkInterface } from '../internal/link.interface';
+import { LsNavigationService } from '../services/ls-navigation-service.service';
 
 @Directive({
-  selector:"[navRouterLink]"
+  selector:"[ls-navigation-routerlink]"
 })
-export class NavRouterLinkDirective implements OnDestroy, INavRouterLink { 
+export class LsNavigationRouterLinkDirective implements OnDestroy, LinkInterface { 
        
-    constructor(@Attribute('routerLink') private routerLink:string, @Optional() @Attribute('fragment') private fragment:string, private el: ElementRef, private ns: NavService) {
+    constructor(@Attribute('routerLink') private routerLink:string, @Optional() @Attribute('fragment') private fragment:string, private el: ElementRef, private ns: LsNavigationService) {
         this.ns.addLink(this);
     }
 
@@ -24,12 +25,14 @@ export class NavRouterLinkDirective implements OnDestroy, INavRouterLink {
             return this.routerLink + "#" + this.fragment;
     }
 
+    getPath() {
+        return this.routerLink;
+    }
+
     getFragment() {
         return this.fragment;
     }
 
-    getRouterLink() {
-        return this.routerLink;
-    }
+
 
 }

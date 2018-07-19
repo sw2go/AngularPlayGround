@@ -3,6 +3,8 @@ import { NgModule } from '@angular/core';
 
 import { AppRoutingModule } from './app-routing.module';
 
+import { LsNavigationModule } from './ls-navigation/ls-navigation.module';
+
 
 
 import {HttpClientModule} from '@angular/common/http';
@@ -22,11 +24,6 @@ import { CarouselModule } from "ngx-bootstrap";
 import { CarouselComponent } from './common/carousel-basic/carousel-basic.component';
 import { LandingsectionComponent } from './common/mainpage/landingsection/landingsection.component';
 import { ServicesectionComponent } from './common/mainpage/servicesection/servicesection.component';
-import { NavFragmentDirective } from './common/navfragment.directive';
-import { NavService } from './core/services/navservice.service';
-import { NavRouterLinkDirective } from './common/navrouterlink.directive';
-
-
 
 @NgModule({
   imports: [    // list of modules required by this module or it's components
@@ -34,7 +31,8 @@ import { NavRouterLinkDirective } from './common/navrouterlink.directive';
     AppRoutingModule,     // my own routing module app-routing.module.ts
     CarouselModule.forRoot(),
     HttpClientModule,      // HttpClient is used in carousel-basic.component.ts
-    CoreModule
+    CoreModule,
+    LsNavigationModule.forRoot( { headerOffset: -56, useFragments: true })
   ],
   declarations: [         // List of module components
     AppComponent,         // <app-root> is used in index.html  
@@ -45,11 +43,9 @@ import { NavRouterLinkDirective } from './common/navrouterlink.directive';
     DetailpageComponent,
     AboutpageComponent,
     LandingsectionComponent,
-    ServicesectionComponent,
-    NavFragmentDirective,
-    NavRouterLinkDirective
+    ServicesectionComponent
     ],
-  providers: [NavService],
+  providers: [],
   bootstrap: [AppComponent] // the root component
 })
 
