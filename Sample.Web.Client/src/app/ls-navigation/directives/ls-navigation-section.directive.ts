@@ -30,11 +30,10 @@ export class LsNavigationSectionDirective implements OnDestroy, SectionInterface
     
     match(url: string) {
         let result = false; 
-        if (this.ns.Config.useFragments) {
-            
-            if (this.id == null) {
-                result = (url === "/");
-                console.log( "match:" +  result  + " top:" + "/" );
+        if (this.ns.Config.useFragments) {            
+            if (this.id == null) {  // no id defined on the section, this  means 
+                result = (url.indexOf("#") < 0);    // there is no # in url required  
+                console.log( "match:" +  result  + " frg:" ); // i.e. "/" or "/details"
             }
             else {
                 result = url.endsWith("#" + this.id);
