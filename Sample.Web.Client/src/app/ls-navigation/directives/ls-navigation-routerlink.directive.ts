@@ -1,5 +1,5 @@
 import { Directive, Attribute, ElementRef, OnDestroy, Input, Optional, HostBinding} from '@angular/core';
-import { LinkInterface } from '../internal/link.interface';
+import { LinkInterface } from '../models/link.interface';
 import { LsNavigationService } from '../services/ls-navigation-service.service';
 
 @Directive({

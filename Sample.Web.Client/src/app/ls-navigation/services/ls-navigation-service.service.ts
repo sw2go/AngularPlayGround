@@ -1,16 +1,17 @@
 import { Injectable, OnDestroy, Inject } from '@angular/core';
 import { Location } from '@angular/common';
-import { Router, RouterEvent, NavigationEnd, NavigationStart, UrlSegment } from '@angular/router';
+import { Router, RouterEvent, NavigationEnd, NavigationStart, UrlSegment, NavigationCancel, NavigationError } from '@angular/router';
 import { interval } from 'rxjs/observable/interval';
 import { fromEvent } from 'rxjs/observable/fromEvent';
 import { Subject } from 'rxjs/Subject';
 import { Subscription } from 'rxjs/Subscription';
-import { map, filter, pairwise, takeUntil } from 'rxjs/operators';
-import { FragmentInterface } from '../models/fragment.interface';
+import { map, filter, pairwise, takeUntil, delayWhen } from 'rxjs/operators';
+import { SectionInterface } from '../models/section.interface';
 import { LinkInterface } from '../models/link.interface';
 import { Target } from '../models/target';
 import { LsNavigationConfigService } from './ls-navigation-config.service';
 import { LsNavigationConfigInterface } from '../models/ls-navigation-config.interface';
+import { timer } from '../../../../node_modules/rxjs/observable/timer';
 
 // Attention: ActivatedRoute is only usable in Components but not in a service !!!
 
@@ -21,8 +22,7 @@ export class LsNavigationService implements OnDestroy  {
   private destroy$ = new Subject();                             // to properly terminate Observables ( avoid memory leaks )
   private navtarget: Target;                                    // class keeping current navigation target position  
   private navurlpath: string = "";                              // last navigated urlpath ( without params and/or fragment )
-  //private muteNavigationEvents: boolean = false;
-
+  private muteNavigationEvents: number = 0;                     // only used when this.config.updateRouterOnManualScroll = true
 
   // Subject for active Link Display ( triggered by either "manualscroll$" or "routerNavigationEnd$" )
   private showActiveSubject = new Subject<LinkInterface>();  
@@ -49,15 +49,13 @@ export class LsNavigationService implements OnDestroy  {
 
   private routerNavigationEnd$ = this.router.events             // Observable for router event
   .pipe(
-    filter((event: RouterEvent) => { return (event instanceof NavigationEnd);}),
-    map((event: RouterEvent) => { return event.url }),
+    filter((event: RouterEvent) => { return (event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError);}),
+    map((event: RouterEvent) => { return { url: event.url, cancel: !(event instanceof NavigationEnd) } }),
+    delayWhen(() => timer(0)),                                  // delay to ensure "add section" happens before routerNavigationEnd
     takeUntil(this.destroy$)  
   )
 
-
-
-
-  private scrollend$ = interval(200)                            // Observable with a Samplerate
+  private scrollend$ = interval(50)                             // Observable with a short Samplerate ( 200 war zu kurz wenn man nur wenig scrollt und dann wieder Menu klickt )
   .pipe(
     map(() => window.pageYOffset),                              // sample value = page Y Offset
     pairwise(), map((e) => { 
@@ -68,7 +66,7 @@ export class LsNavigationService implements OnDestroy  {
     takeUntil(this.destroy$)       
   ) 
 
-  private sbn: Subscription = null;                         // Subscription to allow unsubscribe at scrollend
+  private sbn: Subscription = null;                             // Subscription, to have a object for unsubscribing at scrollend
 
   public get ScrollByNavigation() : boolean {               
     return (this.sbn != null && !this.sbn.closed);
@@ -82,7 +80,7 @@ export class LsNavigationService implements OnDestroy  {
           console.log("scroll-end diff:" + e[0].diff + " pos:" + Math.round(e[0].pos));
             if (this.navtarget.PositionHasChanged)
               this.navtarget.ScrollToPosition();
-            else { //if (this.navtarget.Position == Math.round(e[0].pos))   // unbedingtes unsubscribe damit, falls die Zielposition nicht erreicht werden kann,
+            else { //if (this.navtarget.Position == Math.round(e[0].pos))     // unbedingtes unsubscribe damit, falls die Zielposition nicht erreicht werden kann,
               console.log("scrollbynav-unsub");                               // trotzdem wieder "manuell" scrolling geht
               this.sbn.unsubscribe();    
             }                                  
@@ -95,10 +93,9 @@ export class LsNavigationService implements OnDestroy  {
     }
   }
 
-
   constructor(private router: Router, private location: Location,
-    @Inject(LsNavigationConfigService) private config: LsNavigationConfigInterface) { 
-
+    @Inject(LsNavigationConfigService) private config: LsNavigationConfigInterface) {
+      
     this.navtarget = new Target(this.config.headerOffset);
 
     // default ist 'ignore', 'reload' damit nach click auf "A" und scroll nach "B" ein click auf "A" nicht ignoriert wird   
@@ -107,111 +104,149 @@ export class LsNavigationService implements OnDestroy  {
     console.log("header top:" + this.config.headerOffset)
   
     this.showActiv$.subscribe( e => {
-      if (e[0]) { e[0].showAsActive = false; }                    // set previous inactive ( only initial value is null )
+
+      // Update active Status in Menu
+      if (e[0]) { 
+        e[0].showAsActive = false;                              // set previous inactive ( only initial value is null )
+      }                    
       if (e[1]) { 
-        e[1].showAsActive = true;                                 // set current active
-        
-        console.log(">>>>" + e[1].getUrl());
-        
-        //if (!this.ScrollByNavigation) {                         // TODO besser beschreiben warum es keine Option ist:
-        //  this.muteNavigationEvents = true;                     // man kann trotz router-update auf der seite ein detailelement einer anderen Seite klicken
-        //  this.router.navigateByUrl(e[1].getUrl());             // was dann zu z.B. /SE not found führen kann wenn SE geklickt wird während man noch im start-screen ist
-        //  console.log(">>>>" + e[1].getUrl());
-        //}
-        this.location.go(e[1].getUrl());                          // update url in browser
-      }                                   
-      
+        e[1].showAsActive = true;                               // set current active
+
+        // Update URL 
+        if (!this.config.updateRouterOnManualScroll) {
+          this.location.go(e[1].getUrl());                      // update url in browser only
+        }
+        else if (!this.ScrollByNavigation) {                    // TODO besser beschreiben warum es keine Option ist:
+          this.muteNavigationEvents++;                          // man kann trotz router-update auf der seite ein detailelement einer anderen Seite klicken
+          this.router.navigateByUrl(e[1].getUrl());             // was dann zu z.B. /SE not found führen kann wenn SE geklickt wird während man noch im start-screen ist
+        }        
+      }                                         
     });
     
     this.showActiveSubject.next(null);                            // emit initial dummy value null to get a change when first real value arrives 
 
-    this.scrollmanual$.subscribe(position =>{ 
-      console.log("scroll-man " + position);
-
-      for (let i=this.pageFragments.length - 1; i >= 0; i-- ) {
-        if (position >= this.pageFragments[i].getOffsetTop() + this.config.headerOffset) {
+    this.scrollmanual$.subscribe(position =>{     
+      for (let i=this.pageSections.length - 1; i >= 0; i-- ) {
+        if (position >= this.pageSections[i].getOffsetTop() + this.config.headerOffset) {
+          console.log("scroll-man: " + position + " -> section: " + this.pageSections[i].getId() );
           // we found a matching fragment - now try to find a matching routerlink           
-        
-          let lnk: LinkInterface = this.config.useFragments
-            ? ( (this.pageFragments[i].getId()==null)
-            ? this.menuLinks.find(x => x.getUrl() == this.navurlpath)
-            : this.menuLinks.find(x => x.getUrl() == this.navurlpath + "#" + this.pageFragments[i].getId()) )
-            : ( (this.pageFragments[i].getId()==null)
-            ? this.menuLinks.find(x => x.getUrl() == "/")
-            : this.menuLinks.find(x => x.getUrl() == "/" + this.pageFragments[i].getId()) )
+          
+          let lnk: LinkInterface = null;
+
+          if (this.config.useFragments) {
+            if (this.pageSections[i].getId()==null)
+              lnk = this.menuLinks.find(x => x.getUrl() == this.navurlpath);
+            else
+              lnk = this.menuLinks.find(x => x.getUrl() == this.navurlpath + "#" + this.pageSections[i].getId());
+          }
+          else {
+            if (this.pageSections[i].getId()==null)
+              lnk = this.menuLinks.find(link => link.getUrl() == "/");
+            else
+              //lnk = this.menuLinks.find(link => link.getUrl() == "/" + this.pageSections[i].getId());
+              lnk = this.menuLinks.find(link => this.pageSections[i].match(link.getUrl()));
+          }
 
           if (lnk != null) { // if found return link - otherwise continue loop   
             this.showActiveSubject.next(lnk);
+            //console.log("scroll-man " + position + " section: " +  this.pageSections[i].getId() + " link: " + lnk.getUrl()  );
+
             return;
+          }
+          else {
+            //console.log("scroll-man " + position + " section: " +  this.pageSections[i].getId() + " no link" );
           }
         }
       }
+      console.log("scroll-man: " + position + " -> no section found");
       this.showActiveSubject.next(this.menuLinks.find(x => x.getUrl() == this.navurlpath));
     });
 
     this.routerNavigationStart$.subscribe((url: string) => { 
 
-      //if (this.muteNavigationEvents)
-      //  return;
-      
-      //this.SetScrollByNavigation(true);
+      if (this.muteNavigationEvents === 0)
+        this.SetScrollByNavigation(true);     // set early -> to avoid occasional "manual-scroll" event at begin of navigation    
+
     });
 
-    this.routerNavigationEnd$.subscribe( (url: string) => { 
+    this.routerNavigationEnd$.subscribe( (e) => { 
     
-    //this.routerNavEnd$.subscribe( (urlseg: UrlSegment[]) => {
-    //  let url: string = urlseg.map(x => x.path).join("/");
+      if (this.config.updateRouterOnManualScroll && this.muteNavigationEvents > 0) {
+        this.muteNavigationEvents--;
+      }
+      else if (e.cancel) {  // NavigationCancel or NavigationError
+        this.SetScrollByNavigation(false); 
+      }
+      else {                // NavigationEnd
+                
+        this.navurlpath = /[^#?]+/.exec(e.url)[0]; // path only ( without param and fragment )
 
-    // if (this.muteNavigationEvents) {
-     //   this.muteNavigationEvents = false;
-     //   return;
-     // }
-     this.SetScrollByNavigation(true);
+        let fx = e.url.lastIndexOf('#')
+        let navurlpathwithfragment = (fx>0) ? this.navurlpath + e.url.substr(fx) : this.navurlpath;
       
-
-      this.navurlpath = /[^#?]+/.exec(url)[0]; // path only ( without param and fragment )
-
-      let fx = url.lastIndexOf('#')
-      let navurlpathwithfragment = (fx>0) ? this.navurlpath + url.substr(fx) : this.navurlpath;
+        console.log("pathWithfragment " + navurlpathwithfragment);
     
+        //if (this.pageSections.length > 0) {  // nicht nötig da 
 
+        // for the current navurl find the best matching (longest) routerlink  
+        let lnk = this.menuLinks.find(link => link.getUrl() == navurlpathwithfragment);
+        if (!lnk && this.config.activeLinkDisplayPartialMatch) {
+          let partialMatches: LinkInterface[] = this.menuLinks.filter(link => link.getUrl().length > 1 && navurlpathwithfragment.startsWith(link.getUrl()));
+          partialMatches.sort((link1, link2) => { return link1.getUrl().length - link2.getUrl().length }); // longes first
+          if (partialMatches.length >0 )
+            lnk = partialMatches[0];        
+        }
+        // and display link as "active"
+        this.showActiveSubject.next(lnk);
 
+        // 
 
+        //if (this.config.useFragments)
+        //  this.navtarget.Set(this.pageSections.find(section => navurlpathwithfragment.endsWith("#" + section.getId()) ));
+        //else
+        //  this.navtarget.Set(this.pageSections.find(element => navurlpathwithfragment.endsWith("/" + element.getId()) ));
 
-
-      console.log("navurlpath " + this.navurlpath);
-      console.log("pathWithfragment " + navurlpathwithfragment);
-  
-      if (this.pageFragments.length > 0) {
-        
-        this.showActiveSubject.next(this.menuLinks.find(x => x.getUrl() == navurlpathwithfragment));
-
-        if (this.config.useFragments)
-          this.navtarget.Set(this.pageFragments.find(element => navurlpathwithfragment.endsWith("#" + element.getId()) ));
-        else
-          this.navtarget.Set(this.pageFragments.find(element => navurlpathwithfragment.endsWith("/" + element.getId()) ));
-        
-        if (!this.navtarget.IsFragment)
-          this.showActiveSubject.next(this.menuLinks.find(x => x.getUrl() == this.navurlpath));
+        console.log("find section(url):" + navurlpathwithfragment);
+        this.navtarget.Set(this.pageSections.find(section => section.match(navurlpathwithfragment)));
+                  
+        if (!this.navtarget.IsSection)
+          this.showActiveSubject.next(this.menuLinks.find(link => link.getUrl() == this.navurlpath));
    
         if (window.pageYOffset == this.navtarget.Position)  // wenn wir schon da sind  
           this.SetScrollByNavigation(false);                // Abbruch - kein Scroll nötig
         else 
           this.navtarget.ScrollToPosition();        
+     // }
       }
     });   
+/*
+    this.routerNavigationCancel$.subscribe((e) => {
+
+      if (this.config.updateRouterOnManualScroll && this.muteNavigationEvents > 0) {
+        this.muteNavigationEvents--;
+        return;
+      }
+
+      this.SetScrollByNavigation(false); 
+    });
+    */
   }
 
   ngOnDestroy() {
     this.destroy$.next(true);
   }
 
+  public get Config() {
+    return this.config;
+  }
+
+
   /**
-   * List for Directives referencing RouterLink's in Menu and Fragments on Pages  
+   * List for Directives referencing RouterLink's in Menu and Sections on Pages  
    */
 
   private menuLinks: Array<LinkInterface> = [];
-  private pageFragments: Array<FragmentInterface> = [];
+  private pageSections: Array<SectionInterface> = [];
 
   public addLink(item: LinkInterface) {
     if (!this.menuLinks.some(function(i) {return i.getUrl() == item.getUrl();})) {
@@ -228,18 +263,18 @@ export class LsNavigationService implements OnDestroy  {
     } 
   }
 
-  public addFragment(item: FragmentInterface) {
-    if (!this.pageFragments.some(function(i) { return i.getId() == item.getId();})) {
-      this.pageFragments.push(item);
-      console.log("add frag " + item.getId());
+  public addSection(item: SectionInterface) {
+    if (!this.pageSections.some(function(i) { return i.getId() == item.getId();})) {
+      this.pageSections.push(item);
+      console.log("add section " + item.getId());
     }
   }
 
-  public removeFragment(item: FragmentInterface) {
-    let found: number = this.pageFragments.findIndex(i => i.getId() == item.getId());
+  public removeSection(item: SectionInterface) {
+    let found: number = this.pageSections.findIndex(i => i.getId() == item.getId());
     if (found>=0) {
-      this.pageFragments.splice(found,1); 
-      console.log("del frag " + item.getId())
+      this.pageSections.splice(found,1); 
+      console.log("del section " + item.getId())
     } 
   }
 }

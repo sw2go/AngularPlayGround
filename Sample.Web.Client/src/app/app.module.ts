@@ -32,7 +32,7 @@ import { ServicesectionComponent } from './common/mainpage/servicesection/servic
     CarouselModule.forRoot(),
     HttpClientModule,      // HttpClient is used in carousel-basic.component.ts
     CoreModule,
-    LsNavigationModule.forRoot( { headerOffset: -56, useFragments: true })
+    LsNavigationModule.forRoot( { headerOffset: -56, useFragments: true, updateRouterOnManualScroll: false, activeLinkDisplayPartialMatch: false })
   ],
   declarations: [         // List of module components
     AppComponent,         // <app-root> is used in index.html  
